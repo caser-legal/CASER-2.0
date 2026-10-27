@@ -159,6 +159,12 @@ struct CaseResearch: Codable, Equatable, Sendable {
         thinking = try container.decodeIfPresent(String.self, forKey: .thinking) ?? ""
         if let decoded = try container.decodeIfPresent(CaseAbout.self, forKey: .about) {
             about = decoded
+            if about.story.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") {
+                let reparsed = CaseAbout.parseLegacyBrief(about.story)
+                if !reparsed.story.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") {
+                    about = reparsed
+                }
+            }
         } else {
             about = CaseAbout.parseLegacyBrief(brief)
         }
