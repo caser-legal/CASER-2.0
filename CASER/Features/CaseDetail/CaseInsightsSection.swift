@@ -208,18 +208,34 @@ private struct ResearchCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Timeline & News")
+            Text("The Story & News")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white.opacity(0.7))
 
             switch model.research {
             case .idle, .loading:
-                MuseSkeleton(label: "Atticus is searching for the case timeline and news")
+                MuseSkeleton(label: "Atticus is searching for the story behind this case")
             case .failed(let message):
                 RetryMessage(message: message) { await model.retryResearch() }
             case .loaded(let research):
                 MuseMarkdownText(markdown: research.brief)
                 CitationList(citations: research.citations)
+                HStack(spacing: 6) {
+                    if let updatedAt = model.researchUpdatedAt {
+                        Text("Updated \(updatedAt.formatted(.relative(presentation: .named)))")
+                    }
+                    Spacer()
+                    Button {
+                        Task { await model.retryResearch() }
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                    .foregroundStyle(Color.caserAccent)
+                    .frame(minHeight: 44)
+                    .accessibilityHint("Searches again for the latest news about this case")
+                }
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.55))
             }
         }
         .atticusCard()
