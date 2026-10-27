@@ -318,7 +318,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = CASER;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "Authenticate to unlock your saved cases, alerts, search history, and Atticus conversations on this device.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Authenticate to unlock your saved cases, alerts, and search history on this device.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Adam Doherty - All Rights Reserved.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "CASER saves exported PDF pages to your photo library when you choose Save to Photos.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
@@ -362,7 +362,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = CASER;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "Authenticate to unlock your saved cases, alerts, search history, and Atticus conversations on this device.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Authenticate to unlock your saved cases, alerts, and search history on this device.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Adam Doherty - All Rights Reserved.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "CASER saves exported PDF pages to your photo library when you choose Save to Photos.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
