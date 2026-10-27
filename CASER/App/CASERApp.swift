@@ -27,7 +27,6 @@ struct CASERApp: App {
     @State private var userSettings = UserSettingsStore.shared
     @State private var savedCasesManager = SavedCasesManager()
     @State private var router = AppRouter()
-    @State private var appLock = AppLockGate()
     @State private var monitorReconciliationTask: Task<Void, Never>?
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @Environment(\.scenePhase) private var scenePhase
@@ -40,7 +39,6 @@ struct CASERApp: App {
                 .environment(userSettings)
                 .environment(savedCasesManager)
                 .environment(router)
-                .environment(appLock)
                 .onAppear {
                     setupNotificationHandler()
                     reconcileMonitorScheduling()
