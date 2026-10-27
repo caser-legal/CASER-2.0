@@ -36,35 +36,70 @@ struct CaseAbout: Codable, Equatable, Sendable {
         let summary: String
     }
 
+    /// A run of prose followed by the sources (indexes into the research citations) that back it.
+    struct CitedText: Codable, Hashable, Sendable {
+        let text: String
+        let sources: [Int]
+    }
+
     var story: String
+    var storySegments: [CitedText]
     var whosWho: [Person]
     var whereItStands: String
+    var whereItStandsSegments: [CitedText]
     var timeline: [TimelineEvent]
     var inTheNews: [NewsItem]
 
     enum CodingKeys: String, CodingKey {
         case story
+        case storySegments
         case whosWho
         case whereItStands
+        case whereItStandsSegments
         case timeline
         case inTheNews
     }
 
     init(story: String, whosWho: [Person] = [], whereItStands: String = "", timeline: [TimelineEvent] = [], inTheNews: [NewsItem] = []) {
         self.story = story
+        self.storySegments = []
         self.whosWho = whosWho
         self.whereItStands = whereItStands
+        self.whereItStandsSegments = []
         self.timeline = timeline
         self.inTheNews = inTheNews
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        story = try container.decodeIfPresent(String.self, forKey: .story) ?? ""
-        whosWho = try container.decodeIfPresent([Person].self, forKey: .whosWho) ?? []
-        whereItStands = try container.decodeIfPresent(String.self, forKey: .whereItStands) ?? ""
-        timeline = try container.decodeIfPresent([TimelineEvent].self, forKey: .timeline) ?? []
-        inTheNews = try container.decodeIfPresent([NewsItem].self, forKey: .inTheNews) ?? []
+        let strip = Self.stripCitationMarkers
+        storySegments = try container.decodeIfPresent([CitedText].self, forKey: .storySegments) ?? []
+        whereItStandsSegments = try container.decodeIfPresent([CitedText].self, forKey: .whereItStandsSegments) ?? []
+        story = strip(try container.decodeIfPresent(String.self, forKey: .story) ?? "")
+        whosWho = (try container.decodeIfPresent([Person].self, forKey: .whosWho) ?? [])
+            .map { Person(name: $0.name, role: strip($0.role)) }
+        whereItStands = strip(try container.decodeIfPresent(String.self, forKey: .whereItStands) ?? "")
+        timeline = (try container.decodeIfPresent([TimelineEvent].self, forKey: .timeline) ?? [])
+            .map { TimelineEvent(date: $0.date, event: strip($0.event)) }
+        inTheNews = (try container.decodeIfPresent([NewsItem].self, forKey: .inTheNews) ?? [])
+            .map { NewsItem(outlet: $0.outlet, summary: strip($0.summary)) }
+    }
+
+    /// Sources come from Meta's url_citation annotations, so [1]-style markers the model
+    /// typed itself (still present in older cached results) are dropped rather than shown.
+    static func stripCitationMarkers(_ text: String) -> String {
+        guard text.contains("[") else { return text }
+        return text.replacingOccurrences(
+            of: #"\s*\[\d{1,2}(?:\s*[,–-]\s*\d{1,2})*\]"#,
+            with: "",
+            options: .regularExpression
+        )
+    }
+
+    /// True when the story is readable prose rather than leftover model JSON.
+    var hasReadableStory: Bool {
+        let trimmed = story.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && !trimmed.hasPrefix("{") && !trimmed.hasPrefix("```") && !trimmed.contains("\"story\"")
     }
 
     static func parseLegacyBrief(_ text: String) -> CaseAbout {
@@ -92,6 +127,8 @@ struct CaseAbout: Codable, Equatable, Sendable {
                     inTheNews: pairs("in_the_news", "outlet", "summary").map { NewsItem(outlet: $0["outlet"] ?? "", summary: $0["summary"] ?? "") }
                 )
             }
+            // Unreadable JSON is never shown as the story.
+            return CaseAbout(story: "")
         }
         var about = CaseAbout(story: "")
         var section = "story"

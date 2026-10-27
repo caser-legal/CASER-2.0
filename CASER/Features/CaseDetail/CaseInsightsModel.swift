@@ -51,9 +51,7 @@ final class CaseInsightsModel {
             if let cached = record.insights {
                 insights = .loaded(cached)
             }
-            if let cached = record.research,
-               !cached.about.story.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{"),
-               !cached.about.story.contains("\"story\"") {
+            if let cached = record.research, cached.about.hasReadableStory {
                 research = .loaded(cached)
                 researchUpdatedAt = record.researchUpdatedAt
             }
@@ -205,6 +203,7 @@ final class CaseInsightsModel {
         research = .loading
         do {
             let value = try await MuseClient.shared.research(for: context)
+            guard value.about.hasReadableStory else { throw MuseError.unavailable }
             let updatedAt = Date()
             AtticusCaseStore.shared.update(cacheKey) {
                 $0.research = value

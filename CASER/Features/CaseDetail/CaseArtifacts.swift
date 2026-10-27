@@ -18,8 +18,40 @@ struct ArtifactSectionTitle: View {
     }
 }
 
+/// Prose with a tappable superscript number after each cited run; the number matches the Sources card.
+struct CitedProse: View {
+    let text: String
+    let segments: [CaseAbout.CitedText]
+    let citations: [MuseCitation]
+
+    var body: some View {
+        Text(attributed)
+            .tint(Color.caserAccent)
+    }
+
+    private var attributed: AttributedString {
+        guard !segments.isEmpty else { return AttributedString(text) }
+        var result = AttributedString()
+        for segment in segments {
+            result += AttributedString(segment.text)
+            let sources = segment.sources.filter { citations.indices.contains($0) }
+            for (position, index) in sources.enumerated() {
+                var marker = AttributedString(position == 0 ? "\u{2009}\(index + 1)" : ",\(index + 1)")
+                marker.font = .caption2.weight(.bold)
+                marker.baselineOffset = 6
+                if let url = URLValidator.safeURL(citations[index].url), url.scheme?.lowercased() == "https" {
+                    marker.link = url
+                }
+                result += marker
+            }
+        }
+        return result
+    }
+}
+
 struct AboutCaseArtifact: View {
     let about: CaseAbout
+    let citations: [MuseCitation]
     let artwork: MuseLoadState<Data>
     let onArtwork: () async -> Void
 
@@ -46,7 +78,7 @@ struct AboutCaseArtifact: View {
                     }
             }
 
-            Text(about.story)
+            CitedProse(text: about.story, segments: about.storySegments, citations: citations)
                 .font(.body)
                 .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
@@ -187,14 +219,18 @@ struct SourceCards: View {
         if !citations.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 ArtifactSectionTitle(title: "Sources", icon: "link")
-                ForEach(visible, id: \.self) { citation in
+                ForEach(Array(visible.enumerated()), id: \.element) { index, citation in
                     Button {
                         guard let url = URLValidator.safeURL(citation.url), url.scheme?.lowercased() == "https" else { return }
                         UIApplication.shared.open(url)
                     } label: {
                         HStack(spacing: 10) {
-                            Image(systemName: "doc.text")
+                            Text("\(index + 1)")
+                                .font(.caption.weight(.bold))
                                 .foregroundStyle(Color.caserAccent)
+                                .frame(width: 22, height: 22)
+                                .background(Color.caserAccent.opacity(0.14), in: Circle())
+                                .accessibilityLabel("Source \(index + 1)")
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(citation.title)
                                     .font(.callout.weight(.medium))

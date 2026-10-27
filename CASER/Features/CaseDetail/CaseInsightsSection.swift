@@ -196,7 +196,7 @@ private struct ResearchCard: View {
                 ArtifactSectionTitle(title: "About This Case", icon: "text.book.closed.fill")
                 RetryMessage(message: message) { await model.retryResearch() }
             case .loaded(let research):
-                AboutCaseArtifact(about: research.about, artwork: model.artwork) {
+                AboutCaseArtifact(about: research.about, citations: research.citations, artwork: model.artwork) {
                     await model.loadArtwork()
                 }
 
@@ -207,7 +207,7 @@ private struct ResearchCard: View {
 
                 if !research.about.whereItStands.isEmpty {
                     ArtifactSectionTitle(title: "Where It Stands", icon: "flag.fill")
-                    Text(research.about.whereItStands)
+                    CitedProse(text: research.about.whereItStands, segments: research.about.whereItStandsSegments, citations: research.citations)
                         .font(.callout)
                         .foregroundStyle(.white.opacity(0.88))
                         .fixedSize(horizontal: false, vertical: true)
