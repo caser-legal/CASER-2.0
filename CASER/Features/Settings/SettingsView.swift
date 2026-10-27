@@ -313,6 +313,7 @@ struct SettingsView: View {
         await CaserLiveActivity.endAll()
 
         PDFExporter.removeLeftoverExports()
+        AtticusCaseStore.shared.removeAll()
 
         let searchHistory = SearchHistoryManager.shared
         searchHistory.clearHistory()
