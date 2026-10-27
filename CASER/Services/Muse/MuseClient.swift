@@ -352,20 +352,6 @@ actor MuseClient {
         let answer: CaseAnswer
     }
 
-    private struct ArtworkEnvelope: Decodable {
-        struct Artwork: Decodable {
-            let imageB64: String
-            let format: String
-        }
-
-        let artwork: Artwork
-    }
-
-    private struct ArtworkRequest: Encodable {
-        let entry: MuseCaseContext
-        let story: String
-    }
-
     private struct StreamChunk: Decodable {
         let type: String
         let delta: String?
@@ -433,17 +419,6 @@ actor MuseClient {
             )
         )
         return envelope.answer
-    }
-
-    func artwork(for context: MuseCaseContext, story: String) async throws -> Data {
-        let envelope: ArtworkEnvelope = try await post(
-            "v1/case-artwork",
-            body: ArtworkRequest(entry: context, story: String(story.prefix(2000)))
-        )
-        guard let data = Data(base64Encoded: envelope.artwork.imageB64), data.count <= 8 * 1024 * 1024 else {
-            throw MuseError.unavailable
-        }
-        return data
     }
 
     func askStreaming(

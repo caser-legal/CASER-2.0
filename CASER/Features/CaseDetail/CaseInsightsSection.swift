@@ -7,8 +7,6 @@ struct CaseInsightsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            AtticusHeader()
-
             if model.hasConsent {
                 InsightsCard(model: model)
                 ResearchCard(model: model)
@@ -61,8 +59,6 @@ struct CaseFollowUpSection: View {
     var body: some View {
         if model.hasConsent {
             VStack(alignment: .leading, spacing: 12) {
-                ArtifactSectionTitle(title: "Ask Atticus", icon: "sparkles")
-
                 ForEach(model.followUps) { followUp in
                     VStack(alignment: .leading, spacing: 8) {
                         Text(followUp.question)
@@ -108,23 +104,6 @@ struct CaseFollowUpSection: View {
                 }
             }
         }
-    }
-}
-
-private struct AtticusHeader: View {
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: "sparkles")
-                .foregroundStyle(Color.caserAccent)
-            Text("Atticus")
-                .font(.headline)
-                .foregroundStyle(.white)
-            Spacer()
-            Text("Powered by Meta Muse")
-                .font(.caption2)
-                .foregroundStyle(.white.opacity(0.55))
-        }
-        .accessibilityElement(children: .combine)
     }
 }
 
@@ -196,9 +175,7 @@ private struct ResearchCard: View {
                 ArtifactSectionTitle(title: "About This Case", icon: "text.book.closed.fill")
                 RetryMessage(message: message) { await model.retryResearch() }
             case .loaded(let research):
-                AboutCaseArtifact(about: research.about, citations: research.citations, artwork: model.artwork) {
-                    await model.loadArtwork()
-                }
+                AboutCaseArtifact(about: research.about, citations: research.citations)
 
                 if !research.about.whosWho.isEmpty {
                     ArtifactSectionTitle(title: "Who's Who", icon: "person.2.fill")

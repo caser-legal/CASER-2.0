@@ -52,56 +52,16 @@ struct CitedProse: View {
 struct AboutCaseArtifact: View {
     let about: CaseAbout
     let citations: [MuseCitation]
-    let artwork: MuseLoadState<Data>
-    let onArtwork: () async -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             ArtifactSectionTitle(title: "About This Case", icon: "text.book.closed.fill")
-
-            if case .loaded(let data) = artwork, let image = UIImage(data: data) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 170)
-                    .clipped()
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(alignment: .bottomLeading) {
-                        Text("Artwork by Muse Image")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(.black.opacity(0.55), in: Capsule())
-                            .padding(8)
-                    }
-            }
 
             CitedProse(text: about.story, segments: about.storySegments, citations: citations)
                 .font(.body)
                 .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
                 .textSelection(.enabled)
-
-            if case .idle = artwork {
-                Button {
-                    Task { await onArtwork() }
-                } label: {
-                    Label("Generate case artwork", systemImage: "photo.badge.plus")
-                        .font(.callout.weight(.semibold))
-                        .foregroundStyle(Color.caserAccent)
-                }
-                .frame(minHeight: 44)
-                .accessibilityHint("Uses Muse Image to create an illustration for this case")
-            } else if case .loading = artwork {
-                HStack(spacing: 8) {
-                    ProgressView().controlSize(.small).tint(.white)
-                    Text("Muse Image is creating artwork…")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.7))
-                }
-            }
         }
     }
 }

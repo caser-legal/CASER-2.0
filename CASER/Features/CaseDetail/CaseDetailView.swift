@@ -297,6 +297,8 @@ struct CaseDetailView: View {
 
                 }
                 .padding(20)
+                // Pin the page to the screen width so nothing can make it drift sideways while scrolling.
+                .containerRelativeFrame(.horizontal, alignment: .leading)
             }
             .background {
                 MainBackground()
