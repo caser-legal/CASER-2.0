@@ -68,6 +68,31 @@ struct CaseAbout: Codable, Equatable, Sendable {
     }
 
     static func parseLegacyBrief(_ text: String) -> CaseAbout {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("{") || trimmed.hasPrefix("```") {
+            let unfenced = trimmed
+                .replacingOccurrences(of: "```json", with: "")
+                .replacingOccurrences(of: "```", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let start = unfenced.firstIndex(of: "{"),
+               let end = unfenced.lastIndex(of: "}"),
+               let data = String(unfenced[start...end]).data(using: .utf8),
+               let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                func text(_ key: String) -> String { (object[key] as? String) ?? "" }
+                func pairs(_ key: String, _ first: String, _ second: String) -> [[String: String]] {
+                    (object[key] as? [[String: Any]] ?? []).map {
+                        [first: ($0[first] as? String) ?? "", second: ($0[second] as? String) ?? ""]
+                    }
+                }
+                return CaseAbout(
+                    story: text("story"),
+                    whosWho: pairs("whos_who", "name", "role").map { Person(name: $0["name"] ?? "", role: $0["role"] ?? "") },
+                    whereItStands: text("where_it_stands"),
+                    timeline: pairs("timeline", "date", "event").map { TimelineEvent(date: $0["date"] ?? "", event: $0["event"] ?? "") },
+                    inTheNews: pairs("in_the_news", "outlet", "summary").map { NewsItem(outlet: $0["outlet"] ?? "", summary: $0["summary"] ?? "") }
+                )
+            }
+        }
         var about = CaseAbout(story: "")
         var section = "story"
         var storyLines: [String] = []
