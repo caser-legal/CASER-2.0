@@ -20,14 +20,165 @@ struct CaseInsights: Codable, Equatable, Sendable {
     let whatToWatch: [String]
 }
 
+struct CaseAbout: Codable, Equatable, Sendable {
+    struct Person: Codable, Hashable, Sendable {
+        let name: String
+        let role: String
+    }
+
+    struct TimelineEvent: Codable, Hashable, Sendable {
+        let date: String
+        let event: String
+    }
+
+    struct NewsItem: Codable, Hashable, Sendable {
+        let outlet: String
+        let summary: String
+    }
+
+    var story: String
+    var whosWho: [Person]
+    var whereItStands: String
+    var timeline: [TimelineEvent]
+    var inTheNews: [NewsItem]
+
+    enum CodingKeys: String, CodingKey {
+        case story
+        case whosWho
+        case whereItStands
+        case timeline
+        case inTheNews
+    }
+
+    init(story: String, whosWho: [Person] = [], whereItStands: String = "", timeline: [TimelineEvent] = [], inTheNews: [NewsItem] = []) {
+        self.story = story
+        self.whosWho = whosWho
+        self.whereItStands = whereItStands
+        self.timeline = timeline
+        self.inTheNews = inTheNews
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        story = try container.decodeIfPresent(String.self, forKey: .story) ?? ""
+        whosWho = try container.decodeIfPresent([Person].self, forKey: .whosWho) ?? []
+        whereItStands = try container.decodeIfPresent(String.self, forKey: .whereItStands) ?? ""
+        timeline = try container.decodeIfPresent([TimelineEvent].self, forKey: .timeline) ?? []
+        inTheNews = try container.decodeIfPresent([NewsItem].self, forKey: .inTheNews) ?? []
+    }
+
+    static func parseLegacyBrief(_ text: String) -> CaseAbout {
+        var about = CaseAbout(story: "")
+        var section = "story"
+        var storyLines: [String] = []
+        for rawLine in text.split(separator: "\n", omittingEmptySubsequences: false) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            let heading = line.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespaces).lowercased()
+            switch heading {
+            case "the story": section = "story"; continue
+            case "who's who": section = "whos"; continue
+            case "where it stands": section = "stands"; continue
+            case "timeline": section = "timeline"; continue
+            case "in the news": section = "news"; continue
+            default: break
+            }
+            guard !line.isEmpty else { continue }
+            switch section {
+            case "story":
+                storyLines.append(line)
+            case "whos":
+                let parts = line.components(separatedBy: " — ")
+                if parts.count > 1 { about.whosWho.append(Person(name: parts[0], role: parts.dropFirst().joined(separator: " — "))) }
+            case "stands":
+                about.whereItStands = [about.whereItStands, line].filter { !$0.isEmpty }.joined(separator: " ")
+            case "timeline":
+                let parts = line.components(separatedBy: " — ")
+                if parts.count > 1 { about.timeline.append(TimelineEvent(date: parts[0], event: parts.dropFirst().joined(separator: " — "))) }
+            case "news":
+                let parts = line.components(separatedBy: " — ")
+                if parts.count > 1 { about.inTheNews.append(NewsItem(outlet: parts[0], summary: parts.dropFirst().joined(separator: " — "))) }
+            default:
+                break
+            }
+        }
+        about.story = storyLines.joined(separator: " ")
+        if about.story.isEmpty { about.story = text }
+        return about
+    }
+}
+
 struct CaseResearch: Codable, Equatable, Sendable {
     let brief: String
     let citations: [MuseCitation]
+    var about: CaseAbout
+    var thinking: String
+
+    enum CodingKeys: String, CodingKey {
+        case brief
+        case citations
+        case about
+        case thinking
+    }
+
+    init(brief: String, citations: [MuseCitation], about: CaseAbout? = nil, thinking: String = "") {
+        self.brief = brief
+        self.citations = citations
+        self.about = about ?? CaseAbout.parseLegacyBrief(brief)
+        self.thinking = thinking
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        brief = try container.decodeIfPresent(String.self, forKey: .brief) ?? ""
+        citations = try container.decodeIfPresent([MuseCitation].self, forKey: .citations) ?? []
+        thinking = try container.decodeIfPresent(String.self, forKey: .thinking) ?? ""
+        if let decoded = try container.decodeIfPresent(CaseAbout.self, forKey: .about) {
+            about = decoded
+        } else {
+            about = CaseAbout.parseLegacyBrief(brief)
+        }
+    }
 }
 
 struct CaseAnswer: Codable, Equatable, Sendable {
     let text: String
     let citations: [MuseCitation]
+    var thinking: String
+    var toolUsed: String
+
+    enum CodingKeys: String, CodingKey {
+        case text
+        case citations
+        case thinking
+        case toolUsed
+    }
+
+    init(text: String, citations: [MuseCitation], thinking: String = "", toolUsed: String = "") {
+        self.text = text
+        self.citations = citations
+        self.thinking = thinking
+        self.toolUsed = toolUsed
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
+        citations = try container.decodeIfPresent([MuseCitation].self, forKey: .citations) ?? []
+        thinking = try container.decodeIfPresent(String.self, forKey: .thinking) ?? ""
+        toolUsed = try container.decodeIfPresent(String.self, forKey: .toolUsed) ?? ""
+    }
+}
+
+struct MuseStreamEvent: Sendable {
+    enum Kind: Sendable {
+        case text(String)
+        case thinking(String)
+        case tool(String)
+        case sources([MuseCitation])
+        case done
+    }
+
+    let kind: Kind
 }
 
 struct MuseCaseContext: Encodable, Equatable, Sendable {
@@ -133,6 +284,28 @@ actor MuseClient {
         let answer: CaseAnswer
     }
 
+    private struct ArtworkEnvelope: Decodable {
+        struct Artwork: Decodable {
+            let imageB64: String
+            let format: String
+        }
+
+        let artwork: Artwork
+    }
+
+    private struct ArtworkRequest: Encodable {
+        let entry: MuseCaseContext
+        let story: String
+    }
+
+    private struct StreamChunk: Decodable {
+        let type: String
+        let delta: String?
+        let name: String?
+        let citations: [MuseCitation]?
+        let code: String?
+    }
+
     private struct ErrorEnvelope: Decodable {
         let error: String
     }
@@ -192,6 +365,83 @@ actor MuseClient {
             )
         )
         return envelope.answer
+    }
+
+    func artwork(for context: MuseCaseContext, story: String) async throws -> Data {
+        let envelope: ArtworkEnvelope = try await post(
+            "v1/case-artwork",
+            body: ArtworkRequest(entry: context, story: String(story.prefix(2000)))
+        )
+        guard let data = Data(base64Encoded: envelope.artwork.imageB64), data.count <= 8 * 1024 * 1024 else {
+            throw MuseError.unavailable
+        }
+        return data
+    }
+
+    func askStreaming(
+        _ question: String,
+        about context: MuseCaseContext,
+        notes: MuseCaseNotes,
+        history: [MuseFollowUpTurn]
+    ) -> AsyncThrowingStream<MuseStreamEvent, Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    guard let baseURL else { throw MuseError.notConfigured }
+                    var request = URLRequest(url: baseURL.appending(path: "v1/case-question-stream"))
+                    request.httpMethod = "POST"
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+                    request.httpBody = try JSONEncoder().encode(
+                        QuestionRequest(entry: context, notes: notes, history: Array(history.suffix(6)), question: question)
+                    )
+                    let (bytes, response) = try await session.bytes(for: request)
+                    guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                        throw MuseError.unavailable
+                    }
+                    var sawText = false
+                    for try await line in bytes.lines {
+                        let trimmed = line.trimmingCharacters(in: .whitespaces)
+                        guard trimmed.hasPrefix("data:") else { continue }
+                        let payload = trimmed.dropFirst(5).trimmingCharacters(in: .whitespaces)
+                        guard let data = payload.data(using: .utf8),
+                              let chunk = try? decoder.decode(StreamChunk.self, from: data) else { continue }
+                        switch chunk.type {
+                        case "text":
+                            if let delta = chunk.delta, !delta.isEmpty {
+                                sawText = true
+                                continuation.yield(MuseStreamEvent(kind: .text(delta)))
+                            }
+                        case "thinking":
+                            if let delta = chunk.delta, !delta.isEmpty {
+                                continuation.yield(MuseStreamEvent(kind: .thinking(delta)))
+                            }
+                        case "tool":
+                            continuation.yield(MuseStreamEvent(kind: .tool(chunk.name ?? "")))
+                        case "sources":
+                            continuation.yield(MuseStreamEvent(kind: .sources(chunk.citations ?? [])))
+                        case "done":
+                            continuation.yield(MuseStreamEvent(kind: .done))
+                        case "error":
+                            throw MuseError.unavailable
+                        default:
+                            continue
+                        }
+                    }
+                    guard sawText else { throw MuseError.unavailable }
+                    continuation.finish()
+                } catch is CancellationError {
+                    continuation.finish(throwing: CancellationError())
+                } catch let error as MuseError {
+                    continuation.finish(throwing: error)
+                } catch let error as URLError where error.code == .cancelled {
+                    continuation.finish(throwing: CancellationError())
+                } catch {
+                    continuation.finish(throwing: MuseError.unavailable)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
     }
 
     private func post<Response: Decodable>(_ path: String, body: some Encodable) async throws -> Response {

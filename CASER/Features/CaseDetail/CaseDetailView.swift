@@ -181,6 +181,8 @@ struct CaseDetailView: View {
                         .accessibilityLabel(exportFailed ? "Retry PDF export" : "Export PDF")
                     }
                     
+                    CaseInsightsSection(model: atticus)
+
                     let parties = entry.parties
                         .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                         .filter { !$0.isEmpty }
@@ -229,8 +231,6 @@ struct CaseDetailView: View {
                         }
                     }
                     
-                    CaseInsightsSection(model: atticus)
-
                     DetailSection(title: "Case Details") {
                         DetailInfoRow(label: "Court", value: courtName)
                         if let caseNumber = entry.displayCaseNumber {
@@ -283,6 +283,11 @@ struct CaseDetailView: View {
             }
             .background {
                 MainBackground()
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if atticus.hasConsent {
+                    AskAtticusBar(model: atticus)
+                }
             }
             .navigationTitle("Case Details")
             .navigationBarTitleDisplayMode(.inline)
