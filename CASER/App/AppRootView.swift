@@ -5,7 +5,6 @@ struct AppRootView: View {
     @Environment(UserSettingsStore.self) private var userSettings
     @Environment(SavedCasesManager.self) private var savedCasesManager
     @Environment(AppRouter.self) private var router
-    @Environment(AppLockGate.self) private var appLock
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
@@ -18,17 +17,11 @@ struct AppRootView: View {
         )
     }
 
-    private var isAuthenticated: Bool {
-        CASERTestMode.isUITesting || appLock.state == .authenticated
-    }
-
     var body: some View {
         ZStack {
             if !hasCompletedOnboarding && !CASERTestMode.isUITesting {
                 Color.black
                     .ignoresSafeArea()
-            } else if !isAuthenticated {
-                AppLockScreen()
             } else {
                 MainContainerView()
                     .tint(Color.caserAccent)
@@ -38,7 +31,7 @@ struct AppRootView: View {
                     }
             }
 
-            if showLaunchSplash && hasCompletedOnboarding && isAuthenticated {
+            if showLaunchSplash && hasCompletedOnboarding {
                 LaunchSplashView {
                     withAnimation(.easeOut(duration: 0.2)) {
                         showLaunchSplash = false
@@ -63,16 +56,6 @@ struct AppRootView: View {
             }
             if !hasCompletedOnboarding {
                 showLaunchSplash = false
-            }
-        }
-        .onChange(of: scenePhase) { _, newPhase in
-            switch newPhase {
-            case .active:
-                appLock.handleForeground()
-            case .background:
-                appLock.handleBackground()
-            default:
-                break
             }
         }
         .onChange(of: router.pendingMonitorMatchId) { _, matchId in
