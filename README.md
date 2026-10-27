@@ -152,7 +152,7 @@ Endpoints: `POST /v1/case-insights`, `POST /v1/case-research`, `POST /v1/case-qu
 - Court data is public record; the archive stores only public feed content, capped at 30 days.
 - The Meta API key exists only as a server environment variable. No key ships in the app.
 - Atticus output is general legal information, not legal advice, and says so in the product.
-- Repositories contain no secrets; both are public for judging, per hackathon rules.
+- Repositories contain no secrets. They are kept private until the public release, then made public for judging as the hackathon rules require.
 
 ## Roadmap
 
