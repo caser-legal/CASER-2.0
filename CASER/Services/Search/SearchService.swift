@@ -205,8 +205,23 @@ final class SearchService {
                 && SearchCourtFilter.includes(feed, in: courtTypes)
         }
 
+        let archiveDays: Int? = switch dateRange {
+        case "Last 24 hours": 1
+        case "Last 7 days": 7
+        case "Last 90 days": 30
+        default: 30
+        }
         searchTask = Task { [weak self] in
-            await self?.run(searchID: searchID, feeds: feeds, matcher: matcher, onProgress: onProgress)
+            await self?.run(
+                searchID: searchID,
+                feeds: feeds,
+                matcher: matcher,
+                archiveQuery: sanitized,
+                archiveDays: archiveDays,
+                states: states,
+                courtTypes: courtTypes,
+                onProgress: onProgress
+            )
         }
     }
 
@@ -227,8 +242,28 @@ final class SearchService {
         searchID: UUID,
         feeds: [CourtFeed],
         matcher: SearchQueryMatcher,
+        archiveQuery: String = "",
+        archiveDays: Int? = nil,
+        states: Set<String> = [],
+        courtTypes: Set<String> = [],
         onProgress: @escaping @MainActor @Sendable (SearchProgress) -> Void
     ) async {
+        // Past filings: the server archive holds 30 days of every court feed and
+        // refreshes every 12 hours, while live feeds only carry recent entries.
+        let archiveTask = Task { () -> [CaseEntry] in
+            guard let archiveDays, !archiveQuery.isEmpty else { return [] }
+            let entries = await FeedArchiveClient.shared.search(query: archiveQuery, days: archiveDays)
+            return entries.filter { entry in
+                guard matcher.matches(entry) else { return false }
+                if !states.isEmpty {
+                    guard let state = entry.state else { return false }
+                    let feedState = CourtFeedManager.shared.feedsWithValidURLs.first { $0.id == entry.courtId }?.stateAbbreviation
+                    guard states.contains(state) || (feedState.map { states.contains($0) } ?? false) else { return false }
+                }
+                return true
+            }
+        }
+        defer { archiveTask.cancel() }
         let total = feeds.count
         guard total > 0 else {
             finish(searchID: searchID, progress: SearchProgress(
@@ -293,6 +328,14 @@ final class SearchService {
 
         guard !Task.isCancelled, activeSearchID == searchID else { return }
         mergePending(&pending)
+        let archived = await archiveTask.value
+        if !archived.isEmpty {
+            var known = Set(results.map(\.id))
+            let fresh = archived.filter { known.insert($0.id).inserted }
+            if !fresh.isEmpty {
+                results = Self.sortedNewestFirst(results + fresh)
+            }
+        }
         let elapsed = ContinuousClock.now - startedAt
         searchServiceLogger.info("Search finished in \(elapsed.formatted(.units(allowed: [.seconds, .milliseconds]))): \(scanned - failed)/\(total) courts, \(filings) filings, \(self.results.count) matches")
 

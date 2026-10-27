@@ -57,15 +57,11 @@ struct CaseInsightsSection: View {
 
 struct CaseFollowUpSection: View {
     let model: CaseInsightsModel
-    @State private var question = ""
-    @FocusState private var isFocused: Bool
 
     var body: some View {
         if model.hasConsent {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Ask About This Case")
-                    .font(.headline)
-                    .foregroundStyle(.white)
+                ArtifactSectionTitle(title: "Ask Atticus", icon: "sparkles")
 
                 ForEach(model.followUps) { followUp in
                     VStack(alignment: .leading, spacing: 8) {
@@ -78,13 +74,29 @@ struct CaseFollowUpSection: View {
                     .atticusCard()
                 }
 
-                if model.isAsking {
-                    HStack(spacing: 8) {
-                        ProgressView().controlSize(.small).tint(.white)
-                        Text("Atticus is looking into it…")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.7))
+                if model.isStreamingAnswer, let question = model.liveQuestion {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(question)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.caserAccent)
+                        if !model.liveThinking.isEmpty {
+                            ThinkingArtifact(thinking: model.liveThinking)
+                        }
+                        if model.liveAnswer.isEmpty {
+                            HStack(spacing: 8) {
+                                ProgressView().controlSize(.small).tint(.white)
+                                Text(model.liveTool.isEmpty ? "Atticus is looking into it…" : "Atticus is searching related dockets…")
+                                    .font(.caption)
+                                    .foregroundStyle(.white.opacity(0.7))
+                            }
+                        } else {
+                            HStack(alignment: .bottom, spacing: 4) {
+                                MuseMarkdownText(markdown: model.liveAnswer)
+                                StreamingCursor()
+                            }
+                        }
                     }
+                    .atticusCard()
                     .accessibilityElement(children: .combine)
                 }
 
@@ -94,41 +106,8 @@ struct CaseFollowUpSection: View {
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-
-                HStack(spacing: 8) {
-                    TextField("Ask Atticus about this case", text: $question, axis: .vertical)
-                        .lineLimit(1...4)
-                        .textInputAutocapitalization(.sentences)
-                        .submitLabel(.send)
-                        .focused($isFocused)
-                        .onSubmit(send)
-                        .padding(12)
-                        .background(CASERColors.inputBackground, in: RoundedRectangle(cornerRadius: 12))
-                        .foregroundStyle(.white)
-
-                    Button(action: send) {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.title)
-                            .foregroundStyle(canSend ? Color.caserAccent : .white.opacity(0.3))
-                    }
-                    .disabled(!canSend)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .accessibilityLabel("Send question")
-                }
             }
         }
-    }
-
-    private var canSend: Bool {
-        !model.isAsking && !question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
-    private func send() {
-        guard canSend else { return }
-        let text = question
-        question = ""
-        isFocused = false
-        Task { await model.ask(text) }
     }
 }
 
@@ -160,6 +139,7 @@ private struct InsightsCard: View {
             case .failed(let message):
                 RetryMessage(message: message) { await model.retryInsights() }
             case .loaded(let insights):
+                ArtifactSectionTitle(title: "What This Filing Is", icon: "doc.text.magnifyingglass")
                 Text(insights.summary)
                     .font(.body)
                     .foregroundStyle(.white)
@@ -167,7 +147,7 @@ private struct InsightsCard: View {
                     .textSelection(.enabled)
 
                 if !insights.filingExplained.isEmpty {
-                    InsightBlock(title: "What this filing means") {
+                    InsightBlock(title: "What This Filing Means") {
                         Text(insights.filingExplained)
                             .font(.callout)
                             .foregroundStyle(.white.opacity(0.85))
@@ -176,7 +156,7 @@ private struct InsightsCard: View {
                 }
 
                 if !insights.keyTerms.isEmpty {
-                    InsightBlock(title: "Terms in this entry") {
+                    InsightBlock(title: "Terms in This Entry") {
                         ForEach(insights.keyTerms, id: \.self) { item in
                             Text("\(Text(item.term).bold()) — \(item.meaning)")
                                 .font(.callout)
@@ -187,7 +167,7 @@ private struct InsightsCard: View {
                 }
 
                 if !insights.whatToWatch.isEmpty {
-                    InsightBlock(title: "What to watch") {
+                    InsightBlock(title: "What to Watch") {
                         ForEach(insights.whatToWatch, id: \.self) { item in
                             Text("• \(item)")
                                 .font(.callout)
@@ -207,19 +187,45 @@ private struct ResearchCard: View {
     let model: CaseInsightsModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("The Story & News")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.7))
-
+        VStack(alignment: .leading, spacing: 16) {
             switch model.research {
             case .idle, .loading:
+                ArtifactSectionTitle(title: "About This Case", icon: "text.book.closed.fill")
                 MuseSkeleton(label: "Atticus is searching for the story behind this case")
             case .failed(let message):
+                ArtifactSectionTitle(title: "About This Case", icon: "text.book.closed.fill")
                 RetryMessage(message: message) { await model.retryResearch() }
             case .loaded(let research):
-                MuseMarkdownText(markdown: research.brief)
-                CitationList(citations: research.citations)
+                AboutCaseArtifact(about: research.about, artwork: model.artwork) {
+                    await model.loadArtwork()
+                }
+
+                if !research.about.whosWho.isEmpty {
+                    ArtifactSectionTitle(title: "Who's Who", icon: "person.2.fill")
+                    WhosWhoArtifact(people: research.about.whosWho)
+                }
+
+                if !research.about.whereItStands.isEmpty {
+                    ArtifactSectionTitle(title: "Where It Stands", icon: "flag.fill")
+                    Text(research.about.whereItStands)
+                        .font(.callout)
+                        .foregroundStyle(.white.opacity(0.88))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if !research.about.timeline.isEmpty {
+                    ArtifactSectionTitle(title: "Timeline", icon: "calendar.badge.clock")
+                    TimelineArtifact(events: research.about.timeline)
+                }
+
+                if !research.about.inTheNews.isEmpty {
+                    ArtifactSectionTitle(title: "In the News", icon: "newspaper.fill")
+                    NewsArtifact(items: research.about.inTheNews)
+                }
+
+                ThinkingArtifact(thinking: research.thinking)
+                SourceCards(citations: research.citations)
+
                 HStack(spacing: 6) {
                     if let updatedAt = model.researchUpdatedAt {
                         Text("Updated \(updatedAt.formatted(.relative(presentation: .named)))")
@@ -259,9 +265,8 @@ private struct InsightBlock<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.6))
-                .textCase(.uppercase)
+                .font(.headline)
+                .foregroundStyle(.white)
             content
         }
     }
@@ -376,5 +381,64 @@ private extension View {
         padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+struct AskAtticusBar: View {
+    let model: CaseInsightsModel
+    @State private var question = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 4) {
+                Image(systemName: "sparkles")
+                    .font(.caption)
+                    .foregroundStyle(Color.caserAccent)
+                Text("Ask Atticus")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white)
+                Spacer()
+                Text("Powered by Meta Muse")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+            HStack(spacing: 8) {
+                TextField("Ask Atticus about this case", text: $question, axis: .vertical)
+                    .lineLimit(1...4)
+                    .textInputAutocapitalization(.sentences)
+                    .submitLabel(.send)
+                    .focused($focused)
+                    .onSubmit(send)
+                    .padding(12)
+                    .background(CASERColors.inputBackground, in: RoundedRectangle(cornerRadius: 12))
+                    .foregroundStyle(.white)
+
+                Button(action: send) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title)
+                        .foregroundStyle(canSend ? Color.caserAccent : .white.opacity(0.3))
+                }
+                .disabled(!canSend)
+                .frame(minWidth: 44, minHeight: 44)
+                .accessibilityLabel("Send question to Atticus")
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .background(.ultraThinMaterial)
+    }
+
+    private var canSend: Bool {
+        !model.isAsking && !question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func send() {
+        guard canSend else { return }
+        let text = question
+        question = ""
+        focused = false
+        Task { await model.ask(text) }
     }
 }

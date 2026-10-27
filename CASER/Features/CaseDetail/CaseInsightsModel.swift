@@ -32,7 +32,14 @@ final class CaseInsightsModel {
     private(set) var followUps: [CaseFollowUp] = []
     private(set) var researchUpdatedAt: Date?
     private(set) var isAsking = false
+    private(set) var liveQuestion: String?
+    private(set) var liveAnswer = ""
+    private(set) var liveThinking = ""
+    private(set) var liveTool = ""
+    private(set) var artwork: MuseLoadState<Data> = .idle
     var askError: String?
+
+    var isStreamingAnswer: Bool { isAsking && liveQuestion != nil }
 
     @ObservationIgnored private let cacheKey: String
     @ObservationIgnored private let context: MuseCaseContext
@@ -91,7 +98,14 @@ final class CaseInsightsModel {
 
         isAsking = true
         askError = nil
-        defer { isAsking = false }
+        liveQuestion = question
+        liveAnswer = ""
+        liveThinking = ""
+        liveTool = ""
+        defer {
+            isAsking = false
+            liveQuestion = nil
+        }
 
         let notes = MuseCaseNotes(
             summary: String((insights.value?.summary ?? "").prefix(3000)),
@@ -101,16 +115,70 @@ final class CaseInsightsModel {
             MuseFollowUpTurn(question: $0.question, answer: String($0.answer.text.prefix(4000)))
         }
 
+        var citations: [MuseCitation] = []
+        var thinking = ""
+        var toolUsed = ""
         do {
-            let answer = try await MuseClient.shared.ask(question, about: context, notes: notes, history: history)
-            followUps.append(CaseFollowUp(question: question, answer: answer))
-            AtticusCaseStore.shared.update(cacheKey) {
-                $0.followUps.append(AtticusFollowUpRecord(question: question, answer: answer))
+            let stream = await MuseClient.shared.askStreaming(question, about: context, notes: notes, history: history)
+            for try await event in stream {
+                switch event.kind {
+                case .text(let delta):
+                    liveAnswer += delta
+                case .thinking(let delta):
+                    liveThinking += delta
+                    thinking = liveThinking
+                case .tool(let name):
+                    liveTool = name
+                    toolUsed = name
+                case .sources(let found):
+                    citations = found
+                case .done:
+                    break
+                }
             }
         } catch is CancellationError {
             return
         } catch {
+            if liveAnswer.isEmpty {
+                do {
+                    let answer = try await MuseClient.shared.ask(question, about: context, notes: notes, history: history)
+                    followUps.append(CaseFollowUp(question: question, answer: answer))
+                    AtticusCaseStore.shared.update(cacheKey) {
+                        $0.followUps.append(AtticusFollowUpRecord(question: question, answer: answer))
+                    }
+                    return
+                } catch is CancellationError {
+                    return
+                } catch {
+                    askError = MuseError.message(for: error)
+                    return
+                }
+            }
             askError = MuseError.message(for: error)
+        }
+
+        let answerText = liveAnswer.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !answerText.isEmpty else { return }
+        let answer = CaseAnswer(text: answerText, citations: citations, thinking: thinking, toolUsed: toolUsed)
+        followUps.append(CaseFollowUp(question: question, answer: answer))
+        AtticusCaseStore.shared.update(cacheKey) {
+            $0.followUps.append(AtticusFollowUpRecord(question: question, answer: answer))
+        }
+    }
+
+    func loadArtwork() async {
+        guard hasConsent else { return }
+        if case .loaded = artwork { return }
+        guard !artwork.isLoading else { return }
+        guard let story = research.value?.about.story, !story.isEmpty else { return }
+        artwork = .loading
+        do {
+            let data = try await MuseClient.shared.artwork(for: context, story: story)
+            artwork = .loaded(data)
+        } catch is CancellationError {
+            artwork = .idle
+        } catch {
+            artwork = .failed("Artwork is unavailable right now.")
         }
     }
 
