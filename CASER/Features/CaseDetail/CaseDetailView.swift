@@ -34,6 +34,17 @@ struct CaseDetailView: View {
         entry.cleanedSummary
     }
 
+    var summaryDisplayText: String {
+        var text = summaryText
+            .replacingOccurrences(of: "[", with: "")
+            .replacingOccurrences(of: "]", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let range = text.range(of: #"\s*\(\d+\)$"#, options: .regularExpression) {
+            text = String(text[..<range.lowerBound])
+        }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     var validatedDocketURL: String? {
         guard let raw = entry.link.trimmedNonEmpty,
               URLValidator.safeCourtURL(raw) != nil else { return nil }
@@ -119,6 +130,109 @@ struct CaseDetailView: View {
                         }
                     }
                     
+                    if atticus.hasConsent {
+                        AskAtticusBar(model: atticus)
+                            .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 14))
+                    }
+
+                    CaseInsightsSection(model: atticus)
+
+                    let parties = entry.parties
+                        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                        .filter { !$0.isEmpty }
+                    if !parties.isEmpty {
+                        DetailSection(title: "Parties") {
+                            ForEach(Array((showAllParties ? parties : Array(parties.prefix(2))).enumerated()), id: \.offset) { index, party in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Party \(index + 1)")
+                                        .font(.caption)
+                                        .foregroundStyle(.white.opacity(0.6))
+                                    Text(cleanPartyName(party, isFirst: false))
+                                        .font(.body)
+                                        .foregroundStyle(.white)
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            
+                            if parties.count > 2 {
+                                Button(showAllParties ? "Show Fewer Parties" : "Show All \(parties.count) Parties") {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        showAllParties.toggle()
+                                    }
+                                }
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.blue)
+                                .frame(minHeight: 44, alignment: .leading)
+                                .accessibilityHint(showAllParties ? "Collapses the party list" : "Shows every party listed in this filing")
+                            }
+                        }
+                    }
+                    
+                    let summaryIsPlaceholder = summaryText == CaseEntry.summaryPlaceholder
+                    if !summaryText.isEmpty && !summaryIsPlaceholder {
+                        DetailSection(title: "Summary") {
+                            Text(summaryDisplayText)
+                                .font(.body)
+                                .foregroundStyle(.white.opacity(0.85))
+                                .fixedSize(horizontal: false, vertical: true)
+                                .contextMenu {
+                                    Button {
+                                        UIPasteboard.general.string = summaryText
+                                    } label: {
+                                        Label("Copy Description", systemImage: "doc.on.doc")
+                                    }
+                                }
+                        }
+                    }
+                    
+                    DetailSection(title: "Case Details") {
+                        DetailInfoRow(label: "Court", value: courtName)
+                        if let caseNumber = entry.displayCaseNumber {
+                            DetailInfoRow(label: "Case Number", value: caseNumber)
+                        }
+                        if let citation = entry.displayCitation {
+                            DetailInfoRow(label: "Citation", value: citation)
+                        }
+                        if let filed = entry.pubDate?.filingDisplayString() {
+                            DetailInfoRow(label: "Filed", value: filed)
+                        }
+                        if let state = (entry.modsCourtState?.trimmedNonEmpty ?? entry.state?.trimmedNonEmpty) {
+                            DetailInfoRow(label: "State", value: state)
+                        }
+                        if let type = (entry.modsCourtType?.trimmedNonEmpty ?? entry.caseType?.trimmedNonEmpty) {
+                            DetailInfoRow(label: "Case Type", value: type.capitalized)
+                        }
+                        if let timezone = entry.timezone?.trimmedNonEmpty {
+                            DetailInfoRow(label: "Timezone", value: timezone)
+                        }
+                        if let source = entry.source?.trimmedNonEmpty {
+                            DetailInfoRow(label: "Source", value: source.capitalized)
+                        }
+                        DetailInfoRow(label: "Feed ID", value: "CASER")
+                    }
+
+                    if !entry.displaySubjects.isEmpty {
+                        DetailSection(title: "Subjects") {
+                            ForEach(entry.displaySubjects, id: \.self) { subject in
+                                Text("• \(subject)")
+                                    .font(.body)
+                                    .foregroundStyle(.white.opacity(0.85))
+                            }
+                        }
+                    }
+
+                    if !entry.displayCategories.isEmpty {
+                        DetailSection(title: "Categories") {
+                            ForEach(entry.displayCategories, id: \.self) { category in
+                                Text("• \(category)")
+                                    .font(.body)
+                                    .foregroundStyle(.white.opacity(0.85))
+                            }
+                        }
+                    }
+
+                    CaseFollowUpSection(model: atticus)
+
                     VStack(spacing: 12) {
                         Button {
                             Task { await toggleAlertFromDetail() }
@@ -180,114 +294,12 @@ struct CaseDetailView: View {
                         .disabled(isPreparingExport)
                         .accessibilityLabel(exportFailed ? "Retry PDF export" : "Export PDF")
                     }
-                    
-                    CaseInsightsSection(model: atticus)
 
-                    let parties = entry.parties
-                        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                        .filter { !$0.isEmpty }
-                    if !parties.isEmpty {
-                        DetailSection(title: "Parties") {
-                            ForEach(Array((showAllParties ? parties : Array(parties.prefix(2))).enumerated()), id: \.offset) { index, party in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Party \(index + 1)")
-                                        .font(.caption)
-                                        .foregroundStyle(.white.opacity(0.6))
-                                    Text(cleanPartyName(party, isFirst: false))
-                                        .font(.body)
-                                        .foregroundStyle(.white)
-                                }
-                                .padding(.vertical, 4)
-                            }
-                            
-                            if parties.count > 2 {
-                                Button(showAllParties ? "Show Fewer Parties" : "Show All \(parties.count) Parties") {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        showAllParties.toggle()
-                                    }
-                                }
-                                .font(.caption.weight(.medium))
-                                .foregroundStyle(.blue)
-                                .frame(minHeight: 44, alignment: .leading)
-                                .accessibilityHint(showAllParties ? "Collapses the party list" : "Shows every party listed in this filing")
-                            }
-                        }
-                    }
-                    
-                    let summaryIsPlaceholder = summaryText == CaseEntry.summaryPlaceholder
-                    if !summaryText.isEmpty && !summaryIsPlaceholder {
-                        DetailSection(title: "Summary") {
-                            Text(summaryText)
-                                .font(.body)
-                                .foregroundStyle(.white.opacity(0.85))
-                                .fixedSize(horizontal: false, vertical: true)
-                                .contextMenu {
-                                    Button {
-                                        UIPasteboard.general.string = summaryText
-                                    } label: {
-                                        Label("Copy Description", systemImage: "doc.on.doc")
-                                    }
-                                }
-                        }
-                    }
-                    
-                    DetailSection(title: "Case Details") {
-                        DetailInfoRow(label: "Court", value: courtName)
-                        if let caseNumber = entry.displayCaseNumber {
-                            DetailInfoRow(label: "Case Number", value: caseNumber)
-                        }
-                        if let citation = entry.displayCitation {
-                            DetailInfoRow(label: "Citation", value: citation)
-                        }
-                        if let filed = entry.pubDate?.filingDisplayString() {
-                            DetailInfoRow(label: "Filed", value: filed)
-                        }
-                        if let state = (entry.modsCourtState?.trimmedNonEmpty ?? entry.state?.trimmedNonEmpty) {
-                            DetailInfoRow(label: "State", value: state)
-                        }
-                        if let type = (entry.modsCourtType?.trimmedNonEmpty ?? entry.caseType?.trimmedNonEmpty) {
-                            DetailInfoRow(label: "Case Type", value: type.capitalized)
-                        }
-                        if let timezone = entry.timezone?.trimmedNonEmpty {
-                            DetailInfoRow(label: "Timezone", value: timezone)
-                        }
-                        if let source = entry.source?.trimmedNonEmpty {
-                            DetailInfoRow(label: "Source", value: source.capitalized)
-                        }
-                        DetailInfoRow(label: "Feed ID", value: "CASER")
-                    }
-
-                    if !entry.displaySubjects.isEmpty {
-                        DetailSection(title: "Subjects") {
-                            ForEach(entry.displaySubjects, id: \.self) { subject in
-                                Text("• \(subject)")
-                                    .font(.body)
-                                    .foregroundStyle(.white.opacity(0.85))
-                            }
-                        }
-                    }
-
-                    if !entry.displayCategories.isEmpty {
-                        DetailSection(title: "Categories") {
-                            ForEach(entry.displayCategories, id: \.self) { category in
-                                Text("• \(category)")
-                                    .font(.body)
-                                    .foregroundStyle(.white.opacity(0.85))
-                            }
-                        }
-                    }
-
-                    CaseFollowUpSection(model: atticus)
                 }
                 .padding(20)
             }
             .background {
                 MainBackground()
-            }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                if atticus.hasConsent {
-                    AskAtticusBar(model: atticus)
-                }
             }
             .navigationTitle("Case Details")
             .navigationBarTitleDisplayMode(.inline)

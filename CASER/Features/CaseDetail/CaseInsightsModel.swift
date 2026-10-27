@@ -51,7 +51,9 @@ final class CaseInsightsModel {
             if let cached = record.insights {
                 insights = .loaded(cached)
             }
-            if let cached = record.research {
+            if let cached = record.research,
+               !cached.about.story.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{"),
+               !cached.about.story.contains("\"story\"") {
                 research = .loaded(cached)
                 researchUpdatedAt = record.researchUpdatedAt
             }

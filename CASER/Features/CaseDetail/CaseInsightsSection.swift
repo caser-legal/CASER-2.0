@@ -424,10 +424,7 @@ struct AskAtticusBar: View {
                 .accessibilityLabel("Send question to Atticus")
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 8)
-        .background(.ultraThinMaterial)
+        .padding(12)
     }
 
     private var canSend: Bool {
