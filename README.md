@@ -134,7 +134,7 @@ Court RSS feeds are a sliding window: miss a week and the filing is gone from th
 ```bash
 npm install
 MODEL_API_KEY=… npm run dev   # key: your Meta Model API key
-npm test                      # 44 tests, node:test
+npm test                      # 46 tests, node:test
 ```
 
 Endpoints: `POST /v1/case-insights`, `POST /v1/case-research`, `POST /v1/case-question`, `POST /v1/case-question-stream` (SSE), `POST /v1/case-artwork`, `GET /v1/docket-archive`, `GET /api/cron/feed-archive` (Bearer `CRON_SECRET`).
@@ -143,7 +143,7 @@ Endpoints: `POST /v1/case-insights`, `POST /v1/case-research`, `POST /v1/case-qu
 
 ## Testing
 
-- Backend: `npm test` — 44 tests covering prompt-injection defenses on untrusted docket text, structured-output shaping (including fenced, double-encoded and string-encoded model JSON), streaming event forwarding, artwork, and archive ingest dedupe + 30-day pruning.
+- Backend: `npm test` — 46 tests covering prompt-injection defenses on untrusted docket text, structured-output shaping (including fenced, double-encoded and string-encoded model JSON), streaming event forwarding, artwork, and archive ingest dedupe + 30-day pruning.
 - TypeScript: `npx tsc --noEmit` clean. iOS: Debug build succeeds (`xcodebuild -scheme CASER`).
 - Production verified end to end: live case research, streaming answers with tool calls, generated artwork, and archive search all exercised against www.caserlegal.com.
 
