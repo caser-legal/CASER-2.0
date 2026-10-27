@@ -177,12 +177,17 @@ struct NewsArtifact: View {
 
 struct SourceCards: View {
     let citations: [MuseCitation]
+    @State private var expanded = false
+
+    private var visible: [MuseCitation] {
+        expanded ? citations : Array(citations.prefix(3))
+    }
 
     var body: some View {
         if !citations.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 ArtifactSectionTitle(title: "Sources", icon: "link")
-                ForEach(citations, id: \.self) { citation in
+                ForEach(visible, id: \.self) { citation in
                     Button {
                         guard let url = URLValidator.safeURL(citation.url), url.scheme?.lowercased() == "https" else { return }
                         UIApplication.shared.open(url)
@@ -212,6 +217,21 @@ struct SourceCards: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint("Opens the source in Safari")
+                }
+                if citations.count > 3 {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(expanded ? "Show fewer sources" : "Show all \(citations.count) sources")
+                                .font(.callout.weight(.semibold))
+                            Image(systemName: expanded ? "chevron.up" : "chevron.down")
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(Color.caserAccent)
+                        .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
