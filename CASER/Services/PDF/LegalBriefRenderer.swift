@@ -183,32 +183,10 @@ enum LegalBriefRenderer {
         let logoWidth = logoHeight * branding.logoAspectRatio
 
         if let logo = branding.printLogoImage {
-            let logoRect = CGRect(x: margin, y: y, width: logoWidth, height: logoHeight)
+            let logoRect = CGRect(x: margin + (contentWidth - logoWidth) / 2, y: y, width: logoWidth, height: logoHeight)
             logo.draw(in: logoRect)
         }
-
-        let stampAttrs: [NSAttributedString.Key: Any] = [
-            .font: LegalBriefStyle.sans(8, weight: .regular),
-            .foregroundColor: LegalBriefStyle.inkMuted,
-            .kern: 0.4
-        ]
-        let stampLine = NSAttributedString(string: AppBranding.pdfProvenanceLine(), attributes: stampAttrs)
-        let stampSize = stampLine.size()
-        let stampX = margin + logoWidth + 8
-        let singleRowFits = stampX + stampSize.width <= margin + contentWidth
-
-        if singleRowFits {
-            let stampY = y + (logoHeight - stampSize.height) / 2
-            stampLine.draw(at: CGPoint(x: stampX, y: stampY))
-            y += logoHeight
-        } else {
-            y += logoHeight + branding.logoToStampGap
-            let centeredX = margin + (contentWidth - stampSize.width) / 2
-            stampLine.draw(at: CGPoint(x: centeredX, y: y))
-            y += stampSize.height
-        }
-
-        y += branding.stampToContentGap
+        y += logoHeight + branding.logoToContentGap
 
         if drawSeparator {
             drawHorizontalRule(
@@ -408,7 +386,7 @@ enum LegalBriefRenderer {
     private static func estimateLinkRowHeight(label: String, url: URL) -> CGFloat {
         let contentW = singleCaseContentWidth()
         let urlHeight = estimateLinkTextHeight(
-            url.absoluteString,
+            fittedLinkText(url, font: LegalBriefStyle.SingleCase.linkFont, width: contentW - singleCaseLinkLabelWidth),
             font: LegalBriefStyle.SingleCase.linkFont,
             width: contentW - singleCaseLinkLabelWidth)
         let labelH = LegalBriefStyle.SingleCase.linkLabelFont.lineHeight
@@ -430,7 +408,7 @@ enum LegalBriefRenderer {
                                               withAttributes: labelAttrs)
 
         let urlHeight = drawHyperlinkedText(
-            url.absoluteString,
+            fittedLinkText(url, font: LegalBriefStyle.SingleCase.linkFont, width: contentW - labelW),
             url: url,
             origin: CGPoint(x: margin + labelW, y: y),
             width: contentW - labelW,
@@ -701,44 +679,13 @@ enum LegalBriefRenderer {
         margin: CGFloat,
         y: CGFloat
     ) -> ListRowLayout {
-        let mutedAttrs: [NSAttributedString.Key: Any] = [
-            .font: LegalBriefStyle.ListReport.rowFont,
-            .foregroundColor: LegalBriefStyle.inkSecondary
-        ]
-        let rowAttrs: [NSAttributedString.Key: Any] = [
-            .font: LegalBriefStyle.ListReport.rowFont,
-            .foregroundColor: LegalBriefStyle.inkPrimary
-        ]
-        let emphAttrs: [NSAttributedString.Key: Any] = [
-            .font: LegalBriefStyle.ListReport.rowEmphasisFont,
-            .foregroundColor: LegalBriefStyle.inkPrimary
-        ]
-
-        let courtH = measuredTextHeight(row.courtAbbrev, width: widths.court, attributes: mutedAttrs)
-        let docketH = measuredTextHeight(row.docketNumber ?? "", width: widths.docket, attributes: rowAttrs)
-        let partiesH = measuredTextHeight(row.parties, width: widths.parties, attributes: emphAttrs)
-        let dateH = measuredTextHeight(listRowDateText(for: row), width: widths.filed, attributes: mutedAttrs)
-
-        let primaryHeight = max(courtH, docketH, partiesH, dateH, ListRowMetrics.minPrimaryHeight)
-
-        var linkHeight: CGFloat = 0
-        if let link = row.link {
-            linkHeight = estimateLinkTextHeight(
-                link.absoluteString,
-                font: LegalBriefStyle.ListReport.linkFont,
-                width: contentW
-            )
-        }
-
-        var snippetHeight: CGFloat = 0
-        if let snippet = row.summarySnippet?.truncatedSummary() {
-            let snippetAttrs: [NSAttributedString.Key: Any] = [
-                .font: LegalBriefStyle.serif(8.5, italic: true),
-                .foregroundColor: LegalBriefStyle.inkSecondary
-            ]
-            let prefix = row.keyword.map { "[\($0)]  " } ?? ""
-            snippetHeight = measuredTextHeight(prefix + snippet, width: contentW, attributes: snippetAttrs)
-        }
+        let primaryHeight = max(
+            LegalBriefStyle.ListReport.rowFont.lineHeight,
+            LegalBriefStyle.ListReport.rowEmphasisFont.lineHeight,
+            ListRowMetrics.minPrimaryHeight
+        )
+        let linkHeight: CGFloat = row.link == nil ? 0 : LegalBriefStyle.ListReport.linkFont.lineHeight
+        let snippetHeight: CGFloat = row.summarySnippet?.truncatedSummary() == nil ? 0 : listSnippetFont.lineHeight
 
         var totalHeight = primaryHeight
         if linkHeight > 0 {
@@ -821,34 +768,20 @@ enum LegalBriefRenderer {
         ]
         let primaryH = layout.primaryHeight
 
-        (row.courtAbbrev as NSString).draw(
-            in: CGRect(x: x, y: y, width: widths.court, height: primaryH),
-            withAttributes: mutedAttrs
-        )
+        drawSingleLine(row.courtAbbrev, in: CGRect(x: x, y: y, width: widths.court, height: primaryH), attributes: mutedAttrs)
         x += widths.court + listColumnGutter
 
-        let docket = row.docketNumber ?? ""
-        (docket as NSString).draw(
-            in: CGRect(x: x, y: y, width: widths.docket, height: primaryH),
-            withAttributes: rowAttrs
-        )
+        drawSingleLine(row.docketNumber ?? "", in: CGRect(x: x, y: y, width: widths.docket, height: primaryH), attributes: rowAttrs)
         x += widths.docket + listColumnGutter
 
-        (row.parties as NSString).draw(
-            in: CGRect(x: x, y: y, width: widths.parties, height: primaryH),
-            withAttributes: emphAttrs
-        )
+        drawSingleLine(row.parties, in: CGRect(x: x, y: y, width: widths.parties, height: primaryH), attributes: emphAttrs)
         x += widths.parties + listColumnGutter
 
-        let dateText = listRowDateText(for: row)
-        (dateText as NSString).draw(
-            in: CGRect(x: x, y: y, width: widths.filed, height: primaryH),
-            withAttributes: mutedAttrs
-        )
+        drawSingleLine(listRowDateText(for: row), in: CGRect(x: x, y: y, width: widths.filed, height: primaryH), attributes: mutedAttrs)
 
         if let link = row.link, layout.linkHeight > 0 {
             _ = drawHyperlinkedText(
-                link.absoluteString,
+                fittedLinkText(link, font: LegalBriefStyle.ListReport.linkFont, width: contentW),
                 url: link,
                 origin: CGPoint(x: margin, y: layout.linkBaselineY),
                 width: contentW,
@@ -859,17 +792,15 @@ enum LegalBriefRenderer {
 
         if let snippet = row.summarySnippet?.truncatedSummary(), layout.snippetHeight > 0 {
             let snippetAttrs: [NSAttributedString.Key: Any] = [
-                .font: LegalBriefStyle.serif(8.5, italic: true),
+                .font: listSnippetFont,
                 .foregroundColor: LegalBriefStyle.inkSecondary
             ]
             let prefix = row.keyword.map { "[\($0)]  " } ?? ""
-            let snippetText = NSAttributedString(string: prefix + snippet, attributes: snippetAttrs)
-            snippetText.draw(in: CGRect(
-                x: margin,
-                y: layout.snippetBaselineY,
-                width: contentW,
-                height: layout.snippetHeight
-            ))
+            drawSingleLine(
+                prefix + snippet,
+                in: CGRect(x: margin, y: layout.snippetBaselineY, width: contentW, height: layout.snippetHeight),
+                attributes: snippetAttrs
+            )
         }
 
         drawHorizontalRule(
@@ -879,6 +810,17 @@ enum LegalBriefRenderer {
             color: LegalBriefStyle.hairlineColor,
             width: 0.3
         )
+    }
+
+    private static let listSnippetFont = LegalBriefStyle.serif(8.5, italic: true)
+
+    /// Draws text on one line, ending in an ellipsis when it doesn't fit.
+    private static func drawSingleLine(_ text: String, in rect: CGRect, attributes: [NSAttributedString.Key: Any]) {
+        let para = NSMutableParagraphStyle()
+        para.lineBreakMode = .byTruncatingTail
+        var attrs = attributes
+        attrs[.paragraphStyle] = para
+        (text as NSString).draw(with: rect, options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine], attributes: attrs, context: nil)
     }
 
     private static func linkAttributes(font: UIFont, underline: Bool = true) -> [NSAttributedString.Key: Any] {
@@ -930,6 +872,26 @@ enum LegalBriefRenderer {
     }
 
     @discardableResult
+    /// The link as one line: scheme and "www." dropped, and the middle shortened if it still doesn't fit.
+    /// The full URL stays on the tappable link.
+    private static func fittedLinkText(_ url: URL, font: UIFont, width: CGFloat) -> String {
+        var text = url.absoluteString
+        for prefix in ["https://", "http://", "www."] where text.lowercased().hasPrefix(prefix) {
+            text.removeFirst(prefix.count)
+        }
+        let attrs = linkAttributes(font: font)
+        func fits(_ candidate: String) -> Bool {
+            (candidate as NSString).size(withAttributes: attrs).width <= width
+        }
+        guard !fits(text) else { return text }
+        var head = String(text.prefix(text.count / 2))
+        var tail = String(text.suffix(text.count - head.count))
+        while !head.isEmpty, !tail.isEmpty, !fits(head + "\u{2026}" + tail) {
+            if head.count >= tail.count { head.removeLast() } else { tail.removeFirst() }
+        }
+        return head + "\u{2026}" + tail
+    }
+
     private static func drawHyperlinkedText(_ text: String,
                                             url: URL,
                                             origin: CGPoint,
@@ -1034,10 +996,6 @@ enum LegalBriefRenderer {
         let pageW = PDFExporter.sharedPageSize.width
         let pageH = PDFExporter.sharedPageSize.height
         let baseY = pageH - 36
-        let df = DateFormatter()
-        df.dateStyle = .medium
-        df.timeStyle = .none
-
         let footerAttrs: [NSAttributedString.Key: Any] = [
             .font: LegalBriefStyle.SingleCase.footerFont,
             .foregroundColor: LegalBriefStyle.inkSecondary
@@ -1051,7 +1009,7 @@ enum LegalBriefRenderer {
                            color: LegalBriefStyle.hairlineColor, width: 0.4)
 
         (leftLabel as NSString).draw(at: CGPoint(x: margin, y: baseY), withAttributes: emphAttrs)
-        let dateStr = df.string(from: Date())
+        let dateStr = AppBranding.pdfPreparedLine()
         let rightSize = (dateStr as NSString).size(withAttributes: footerAttrs)
         (dateStr as NSString).draw(at: CGPoint(x: pageW - margin - rightSize.width, y: baseY), withAttributes: footerAttrs)
 
@@ -1088,19 +1046,44 @@ enum PDFTextUtilities {
 
     static func courtAbbreviation(courtId: String, fullName: String) -> String {
         let lower = fullName.lowercased()
-        if lower.contains("court of appeals") {
-            if let circuit = circuitFromName(fullName) {
-                return circuit
-            }
-        }
-        if lower.contains("bankruptcy") {
-            return shortCourtDistrict(fullName: fullName).map { "\($0) Bankr." } ?? courtId.uppercased()
-        }
-        if lower.contains("district court") {
-            if let short = shortCourtDistrict(fullName: fullName) { return short }
+        if lower.contains("court of appeals"), let circuit = circuitFromName(fullName) {
+            return circuit
         }
         if lower.contains("supreme court") { return "U.S." }
-        return courtId.uppercased()
+        if let district = shortCourtDistrict(fullName: fullName) ?? shortStateCourt(fullName: fullName) {
+            return lower.contains("bankruptcy") ? "\(district) Bankr." : district
+        }
+        if let feed = shortFeedCourt(courtId: courtId) { return feed }
+        return fullName
+    }
+
+    /// Names like "Pennsylvania Eastern Bankruptcy Court" or "Massachusetts District Court".
+    private static func shortStateCourt(fullName: String) -> String? {
+        let pattern = #"^(.+?)\s+(?:(Northern|Southern|Eastern|Western|Central|Middle)\s+)?(?:Bankruptcy|District)\s+Court"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+              let m = regex.firstMatch(in: fullName, range: NSRange(fullName.startIndex..., in: fullName)),
+              let stateRange = Range(m.range(at: 1), in: fullName),
+              let state = knownStateAbbrev(String(fullName[stateRange])) else { return nil }
+        let direction = Range(m.range(at: 2), in: fullName).map { String(fullName[$0].prefix(1)).uppercased() + ".D." }
+        return "\(direction ?? "D.") \(state)"
+    }
+
+    /// Feed ids like "govinfo-casd" or "uscourts-mab", read as state code, region and bankruptcy flag.
+    private static func shortFeedCourt(courtId: String) -> String? {
+        var code = (courtId.lowercased().split(separator: "-").last).map(String.init) ?? ""
+        guard code.count >= 3, let stateName = StateAbbreviations.name(for: String(code.prefix(2))),
+              let state = knownStateAbbrev(stateName) else { return nil }
+        code.removeFirst(2)
+        let bankruptcy = code.hasSuffix("b")
+        if bankruptcy { code.removeLast() }
+        let regions = ["n": "N.D.", "s": "S.D.", "e": "E.D.", "w": "W.D.", "c": "C.D.", "m": "M.D."]
+        let region: String
+        switch code {
+        case "", "d": region = "D."
+        case let value where value.count <= 2 && regions[String(value.prefix(1))] != nil: region = regions[String(value.prefix(1))]!
+        default: return nil
+        }
+        return bankruptcy ? "\(region) \(state) Bankr." : "\(region) \(state)"
     }
 
     private static func shortCourtDistrict(fullName: String) -> String? {
@@ -1131,6 +1114,10 @@ enum PDFTextUtilities {
     }
 
     private static func stateAbbrev(_ state: String) -> String {
+        knownStateAbbrev(state) ?? state.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func knownStateAbbrev(_ state: String) -> String? {
         let map: [String: String] = [
             "Alabama": "Ala.", "Alaska": "Alaska", "Arizona": "Ariz.", "Arkansas": "Ark.",
             "California": "Cal.", "Colorado": "Colo.", "Connecticut": "Conn.", "Delaware": "Del.",
@@ -1147,8 +1134,7 @@ enum PDFTextUtilities {
             "West Virginia": "W. Va.", "Wisconsin": "Wis.", "Wyoming": "Wyo.",
             "Puerto Rico": "P.R.", "Guam": "Guam", "Virgin Islands": "V.I."
         ]
-        let trimmed = state.trimmingCharacters(in: .whitespacesAndNewlines)
-        return map[trimmed] ?? trimmed
+        return map[state.trimmingCharacters(in: .whitespacesAndNewlines).capitalized]
     }
 
     private static func circuitFromName(_ name: String) -> String? {

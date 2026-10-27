@@ -6,45 +6,57 @@ import os.log
 private let pdfLogger = Logger(subsystem: "com.caser.app", category: "PDFExporter")
 
 enum LegalBriefStyle {
-    static let inkPrimary = UIColor(red: 0.07, green: 0.09, blue: 0.16, alpha: 1.0)
-    static let inkSecondary = UIColor(red: 0.27, green: 0.30, blue: 0.38, alpha: 1.0)
-    static let inkMuted = UIColor(red: 0.45, green: 0.48, blue: 0.55, alpha: 1.0)
-    static let ruleColor = UIColor(red: 0.18, green: 0.20, blue: 0.28, alpha: 1.0)
-    static let hairlineColor = UIColor(red: 0.78, green: 0.80, blue: 0.85, alpha: 1.0)
-    static let altRowFill = UIColor(red: 0.97, green: 0.97, blue: 0.95, alpha: 1.0)
-    static let linkInk = UIColor(red: 0.10, green: 0.22, blue: 0.45, alpha: 1.0)
+    // CASER's black and gold theme, toned for a white page.
+    static let inkPrimary = UIColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1.0)
+    static let inkSecondary = UIColor(red: 0.30, green: 0.30, blue: 0.32, alpha: 1.0)
+    static let inkMuted = UIColor(red: 0.50, green: 0.50, blue: 0.52, alpha: 1.0)
+    /// The app accent (#D4A017), used for the main rules.
+    static let ruleColor = UIColor(red: 0.83, green: 0.63, blue: 0.09, alpha: 1.0)
+    static let hairlineColor = UIColor(red: 0.85, green: 0.85, blue: 0.86, alpha: 1.0)
+    static let altRowFill = UIColor(red: 0.965, green: 0.965, blue: 0.97, alpha: 1.0)
+    /// A darker shade of the accent so link text stays readable on white.
+    static let linkInk = UIColor(red: 0.55, green: 0.41, blue: 0.02, alpha: 1.0)
 
     enum PDFBranding {
-        static let logoHeightBrief: CGFloat = 28
-        static let logoHeightList: CGFloat = 22
-        static let logoToStampGap: CGFloat = 4
-        static let stampToContentGap: CGFloat = 10
-        static let logoAspectRatio: CGFloat = 367.0 / 215.0
+        static let logoHeightBrief: CGFloat = 40
+        static let logoHeightList: CGFloat = 34
+        static let logoToContentGap: CGFloat = 10
+        static let logoAspectRatio: CGFloat = 888.0 / 433.0
 
+        /// The app logo is white artwork with a gold rule, made for dark screens. For a white page,
+        /// white and grey pixels are recolored to ink and the gold rule is kept.
         static let printLogoImage: UIImage? = {
-            guard let source = UIImage(named: "logo-header"),
+            guard let source = UIImage(named: "logo-main"),
                   let cgImage = source.cgImage else { return nil }
 
-            let ciImage = CIImage(cgImage: cgImage)
-            let extent = ciImage.extent
-            let context = CIContext(options: nil)
+            let width = cgImage.width
+            let height = cgImage.height
+            guard let context = CGContext(
+                data: nil,
+                width: width,
+                height: height,
+                bitsPerComponent: 8,
+                bytesPerRow: width * 4,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ), let data = context.data else { return nil }
+            context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-            let inverted = ciImage.applyingFilter("CIColorInvert")
-            let mask = inverted.applyingFilter("CIMaskToAlpha")
-            guard let colorPlane = CIFilter(
-                name: "CIConstantColorGenerator",
-                parameters: ["inputColor": CIColor(color: LegalBriefStyle.inkPrimary)]
-            )?.outputImage?.cropped(to: extent),
-                  let blended = CIFilter(
-                    name: "CIBlendWithAlphaMask",
-                    parameters: [
-                        kCIInputImageKey: colorPlane,
-                        kCIInputBackgroundImageKey: CIImage.empty(),
-                        kCIInputMaskImageKey: mask
-                    ]
-                  )?.outputImage,
-                  let output = context.createCGImage(blended, from: extent) else { return nil }
+            var ink: (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) = (0, 0, 0, 0)
+            LegalBriefStyle.inkPrimary.getRed(&ink.red, green: &ink.green, blue: &ink.blue, alpha: &ink.alpha)
+            let pixels = data.bindMemory(to: UInt8.self, capacity: width * height * 4)
+            for offset in stride(from: 0, to: width * height * 4, by: 4) {
+                let alpha = Int(pixels[offset + 3])
+                guard alpha > 0 else { continue }
+                let channels = [Int(pixels[offset]), Int(pixels[offset + 1]), Int(pixels[offset + 2])]
+                let spread = (channels.max() ?? 0) - (channels.min() ?? 0)
+                guard spread * 255 < 60 * alpha else { continue }
+                pixels[offset] = UInt8(ink.red * CGFloat(alpha))
+                pixels[offset + 1] = UInt8(ink.green * CGFloat(alpha))
+                pixels[offset + 2] = UInt8(ink.blue * CGFloat(alpha))
+            }
 
+            guard let output = context.makeImage() else { return nil }
             return UIImage(cgImage: output, scale: source.scale, orientation: source.imageOrientation)
         }()
     }
@@ -121,7 +133,7 @@ enum PDFPageLayout {
         contentWidth: CGFloat = PDFPageLayout.contentWidth(margin: listMargin),
         gutter: CGFloat = columnGutter
     ) -> (court: CGFloat, docket: CGFloat, parties: CGFloat, filed: CGFloat) {
-        let widths: (CGFloat, CGFloat, CGFloat, CGFloat) = (58, 104, 248, 76)
+        let widths: (CGFloat, CGFloat, CGFloat, CGFloat) = (84, 92, 238, 72)
         let total = widths.0 + widths.1 + widths.2 + widths.3 + gutter * 3
         assert(abs(total - contentWidth) < 0.5,
                "List column widths must sum to content width (\(contentWidth)pt); got \(total)pt")
@@ -403,7 +415,7 @@ struct SearchResultPDFModel: Sendable {
         if let parsed { partiesText = "\(parsed.plaintiff) v. \(parsed.defendant)" }
         else { partiesText = title }
 
-        let fullCourt = entry.courtName?.trimmedNonEmpty ?? entry.courtId.uppercased()
+        let fullCourt = resolveCourtName(courtId: entry.courtId, explicitName: entry.courtName)
         let abbrev = PDFTextUtilities.courtAbbreviation(courtId: entry.courtId, fullName: fullCourt)
         let link: URL? = {
             guard let raw = entry.link.trimmedNonEmpty else { return nil }
@@ -436,7 +448,7 @@ struct SearchResultPDFModel: Sendable {
         if let parsed { partiesText = "\(parsed.plaintiff) v. \(parsed.defendant)" }
         else { partiesText = title }
 
-        let fullCourt = match.courtName?.trimmedNonEmpty ?? match.courtId.uppercased()
+        let fullCourt = resolveCourtName(courtId: match.courtId, explicitName: match.courtName)
         let abbrev = PDFTextUtilities.courtAbbreviation(courtId: match.courtId, fullName: fullCourt)
         let link: URL? = {
             guard let raw = match.link.trimmedNonEmpty else { return nil }

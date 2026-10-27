@@ -14,11 +14,11 @@ enum AppBranding {
     static let pdfMark = "CASER"
     static let pdfDomain = "caserlegal.com"
 
-    static func pdfProvenanceLine(generatedOn date: Date = Date()) -> String {
+    static func pdfPreparedLine(generatedOn date: Date = Date()) -> String {
         let df = DateFormatter()
         df.dateStyle = .long
         df.timeStyle = .none
-        return "\(pdfMark) · \(pdfDomain) · Prepared \(df.string(from: date))"
+        return "Prepared \(df.string(from: date))"
     }
 
     static let pdfMetadataCreator = "\(pdfMark) (\(pdfDomain))"

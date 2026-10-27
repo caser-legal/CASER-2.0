@@ -59,7 +59,7 @@ struct CaseDetailView: View {
             return nil
         }
         let label = entry.primaryDocumentIsZip ? "Download ZIP" : "View Document"
-        let icon = entry.primaryDocumentIsZip ? "archivebox.arrow.down.fill" : "arrow.down.doc.fill"
+        let icon = entry.primaryDocumentIsZip ? "doc.zipper" : "arrow.down.doc.fill"
         return (label, icon, raw)
     }
 
@@ -278,14 +278,6 @@ struct CaseDetailView: View {
                             LinkButton(title: "View Docket", url: docketURL, icon: "doc.text.fill")
                         }
                         
-                        if let action = primaryDocumentAction {
-                            LinkButton(title: action.title, url: action.url, icon: action.icon)
-                        }
-
-                        ForEach(additionalDocumentLinks, id: \.url) { link in
-                            LinkButton(title: link.title, url: link.url, icon: link.icon)
-                        }
-                        
                         Button {
                             Task { await openPDFPreview() }
                         } label: {
@@ -293,6 +285,14 @@ struct CaseDetailView: View {
                         }
                         .disabled(isPreparingExport)
                         .accessibilityLabel(exportFailed ? "Retry PDF export" : "Export PDF")
+
+                        if let action = primaryDocumentAction {
+                            LinkButton(title: action.title, url: action.url, icon: action.icon)
+                        }
+
+                        ForEach(additionalDocumentLinks, id: \.url) { link in
+                            LinkButton(title: link.title, url: link.url, icon: link.icon)
+                        }
                     }
 
                 }
