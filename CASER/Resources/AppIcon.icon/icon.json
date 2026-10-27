@@ -1,0 +1,65 @@
+{
+  "fill" : {
+    "solid" : "srgb:0.24906,0.24906,0.24906,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "accent-bar.png",
+          "name" : "accent-bar",
+          "position" : {
+            "scale" : 2.46,
+            "translation-in-points" : [
+              0,
+              -2.4600000000000364
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "blend-mode" : "darken",
+          "fill" : "none",
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "column.png",
+          "name" : "column",
+          "position" : {
+            "scale" : 2.05,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
