@@ -378,8 +378,8 @@ actor MuseClient {
 
     init() {
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 60
-        configuration.timeoutIntervalForResource = 90
+        configuration.timeoutIntervalForRequest = 120
+        configuration.timeoutIntervalForResource = 180
         configuration.waitsForConnectivity = false
         configuration.httpCookieAcceptPolicy = .never
         configuration.httpShouldSetCookies = false
