@@ -36,7 +36,6 @@ struct CaseAbout: Codable, Equatable, Sendable {
         let summary: String
     }
 
-    /// A run of prose followed by the sources (indexes into the research citations) that back it.
     struct CitedText: Codable, Hashable, Sendable {
         let text: String
         let sources: [Int]
@@ -85,8 +84,6 @@ struct CaseAbout: Codable, Equatable, Sendable {
             .map { NewsItem(outlet: $0.outlet, summary: strip($0.summary)) }
     }
 
-    /// Sources come from Meta's url_citation annotations, so [1]-style markers the model
-    /// typed itself (still present in older cached results) are dropped rather than shown.
     static func stripCitationMarkers(_ text: String) -> String {
         guard text.contains("[") else { return text }
         return text.replacingOccurrences(
@@ -96,7 +93,6 @@ struct CaseAbout: Codable, Equatable, Sendable {
         )
     }
 
-    /// True when the story is readable prose rather than leftover model JSON.
     var hasReadableStory: Bool {
         let trimmed = story.trimmingCharacters(in: .whitespacesAndNewlines)
         return !trimmed.isEmpty && !trimmed.hasPrefix("{") && !trimmed.hasPrefix("```") && !trimmed.contains("\"story\"")
@@ -127,7 +123,6 @@ struct CaseAbout: Codable, Equatable, Sendable {
                     inTheNews: pairs("in_the_news", "outlet", "summary").map { NewsItem(outlet: $0["outlet"] ?? "", summary: $0["summary"] ?? "") }
                 )
             }
-            // Unreadable JSON is never shown as the story.
             return CaseAbout(story: "")
         }
         var about = CaseAbout(story: "")

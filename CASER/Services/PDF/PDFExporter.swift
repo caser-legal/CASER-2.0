@@ -6,15 +6,12 @@ import os.log
 private let pdfLogger = Logger(subsystem: "com.caser.app", category: "PDFExporter")
 
 enum LegalBriefStyle {
-    // CASER's black and gold theme, toned for a white page.
     static let inkPrimary = UIColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1.0)
     static let inkSecondary = UIColor(red: 0.30, green: 0.30, blue: 0.32, alpha: 1.0)
     static let inkMuted = UIColor(red: 0.50, green: 0.50, blue: 0.52, alpha: 1.0)
-    /// The app accent (#D4A017), used for the main rules.
     static let ruleColor = UIColor(red: 0.83, green: 0.63, blue: 0.09, alpha: 1.0)
     static let hairlineColor = UIColor(red: 0.85, green: 0.85, blue: 0.86, alpha: 1.0)
     static let altRowFill = UIColor(red: 0.965, green: 0.965, blue: 0.97, alpha: 1.0)
-    /// A darker shade of the accent so link text stays readable on white.
     static let linkInk = UIColor(red: 0.55, green: 0.41, blue: 0.02, alpha: 1.0)
 
     enum PDFBranding {
@@ -23,8 +20,6 @@ enum LegalBriefStyle {
         static let logoToContentGap: CGFloat = 10
         static let logoAspectRatio: CGFloat = 888.0 / 433.0
 
-        /// The app logo is white artwork with a gold rule, made for dark screens. For a white page,
-        /// white and grey pixels are recolored to ink and the gold rule is kept.
         static let printLogoImage: UIImage? = {
             guard let source = UIImage(named: "logo-main"),
                   let cgImage = source.cgImage else { return nil }

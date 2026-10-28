@@ -743,7 +743,6 @@ struct CaseEntry: Codable, Identifiable, CaseDisplayable, Sendable {
         if let range = resolved.range(of: #"^(?:Doc(?:ument)?\s*#?\s*\d+\s*-\s*)"#, options: .regularExpression) {
             resolved.removeSubrange(range)
         }
-        // Bankruptcy feeds prefix the debtor's name with the judge's lowercase initials, e.g. "djb" or "sgj7".
         if let range = resolved.range(of: #"^[a-z]{2,4}\d{0,2}\s+(?=[A-Z0-9])"#, options: .regularExpression) {
             resolved.removeSubrange(range)
         }

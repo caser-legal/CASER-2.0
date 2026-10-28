@@ -814,7 +814,6 @@ enum LegalBriefRenderer {
 
     private static let listSnippetFont = LegalBriefStyle.serif(8.5, italic: true)
 
-    /// Draws text on one line, ending in an ellipsis when it doesn't fit.
     private static func drawSingleLine(_ text: String, in rect: CGRect, attributes: [NSAttributedString.Key: Any]) {
         let para = NSMutableParagraphStyle()
         para.lineBreakMode = .byTruncatingTail
@@ -872,8 +871,6 @@ enum LegalBriefRenderer {
     }
 
     @discardableResult
-    /// The link as one line: scheme and "www." dropped, and the middle shortened if it still doesn't fit.
-    /// The full URL stays on the tappable link.
     private static func fittedLinkText(_ url: URL, font: UIFont, width: CGFloat) -> String {
         var text = url.absoluteString
         for prefix in ["https://", "http://", "www."] where text.lowercased().hasPrefix(prefix) {
@@ -1057,7 +1054,6 @@ enum PDFTextUtilities {
         return fullName
     }
 
-    /// Names like "Pennsylvania Eastern Bankruptcy Court" or "Massachusetts District Court".
     private static func shortStateCourt(fullName: String) -> String? {
         let pattern = #"^(.+?)\s+(?:(Northern|Southern|Eastern|Western|Central|Middle)\s+)?(?:Bankruptcy|District)\s+Court"#
         guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
@@ -1068,7 +1064,6 @@ enum PDFTextUtilities {
         return "\(direction ?? "D.") \(state)"
     }
 
-    /// Feed ids like "govinfo-casd" or "uscourts-mab", read as state code, region and bankruptcy flag.
     private static func shortFeedCourt(courtId: String) -> String? {
         var code = (courtId.lowercased().split(separator: "-").last).map(String.init) ?? ""
         guard code.count >= 3, let stateName = StateAbbreviations.name(for: String(code.prefix(2))),

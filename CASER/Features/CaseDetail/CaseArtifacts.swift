@@ -18,7 +18,6 @@ struct ArtifactSectionTitle: View {
     }
 }
 
-/// Prose with a tappable superscript number after each cited run; the number matches the Sources card.
 struct CitedProse: View {
     let text: String
     let segments: [CaseAbout.CitedText]
