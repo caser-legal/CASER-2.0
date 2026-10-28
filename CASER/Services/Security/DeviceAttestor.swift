@@ -8,6 +8,8 @@ private let attestLogger = Logger(subsystem: "com.caser.app", category: "DeviceA
 actor DeviceAttestor {
     static let shared = DeviceAttestor()
     static let header = "X-CASER-Device"
+    static let assertionHeader = "X-CASER-Assertion"
+    static let assertionTimeHeader = "X-CASER-Assertion-Time"
 
     enum AttestorError: Error {
         case unsupported
@@ -43,6 +45,7 @@ actor DeviceAttestor {
     private struct StoredPass: Codable {
         let token: String
         let expiresAt: Date
+        let keyId: String?
     }
 
     private static let passKey = "caser.device-pass"
@@ -78,6 +81,28 @@ actor DeviceAttestor {
         try? KeychainHelper.delete(for: Self.passKey)
     }
 
+    func sign(_ request: inout URLRequest) async {
+        guard let keyId = Self.storedPass()?.keyId,
+              let url = request.url,
+              let method = request.httpMethod?.uppercased() else { return }
+        let time = String(Int64(Date().timeIntervalSince1970 * 1000))
+        let bodyHash = SHA256.hash(data: request.httpBody ?? Data()).map { String(format: "%02x", $0) }.joined()
+        let clientData = Data("\(method)\n\(url.path)\n\(bodyHash)\n\(time)".utf8)
+        do {
+            let assertion = try await DCAppAttestService.shared.generateAssertion(
+                keyId,
+                clientDataHash: Data(SHA256.hash(data: clientData))
+            )
+            request.setValue(assertion.base64EncodedString(), forHTTPHeaderField: Self.assertionHeader)
+            request.setValue(time, forHTTPHeaderField: Self.assertionTimeHeader)
+        } catch let error as DCError where error.code == .invalidKey {
+            attestLogger.error("App Attest key is no longer valid; attesting again")
+            reset()
+        } catch {
+            attestLogger.error("App Attest assertion failed")
+        }
+    }
+
     private func attest(baseURL: URL) async throws -> String {
         let service = DCAppAttestService.shared
         guard service.isSupported else { throw AttestorError.unsupported }
@@ -103,7 +128,7 @@ actor DeviceAttestor {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let expiresAt = formatter.date(from: decoded.expiresAt) else { throw AttestorError.unavailable }
-        if let stored = try? JSONEncoder().encode(StoredPass(token: decoded.token, expiresAt: expiresAt)) {
+        if let stored = try? JSONEncoder().encode(StoredPass(token: decoded.token, expiresAt: expiresAt, keyId: keyId)) {
             try? KeychainHelper.save(data: stored, for: Self.passKey)
         }
         return decoded.token

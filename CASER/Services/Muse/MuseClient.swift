@@ -443,6 +443,7 @@ actor MuseClient {
                     var streamed: (URLSession.AsyncBytes, URLResponse)?
                     for attempt in 0..<2 {
                         request.setValue(try await Self.deviceToken(baseURL: baseURL), forHTTPHeaderField: DeviceAttestor.header)
+                        await DeviceAttestor.shared.sign(&request)
                         let result = try await session.bytes(for: request)
                         if (result.1 as? HTTPURLResponse)?.statusCode == 401, attempt == 0 {
                             await DeviceAttestor.shared.reset()
@@ -522,6 +523,7 @@ actor MuseClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(try await Self.deviceToken(baseURL: baseURL), forHTTPHeaderField: DeviceAttestor.header)
         request.httpBody = try JSONEncoder().encode(body)
+        await DeviceAttestor.shared.sign(&request)
 
         let data: Data
         let response: URLResponse
