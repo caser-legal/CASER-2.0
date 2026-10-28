@@ -6,7 +6,7 @@ import os.log
 private let consentLogger = Logger(subsystem: "com.caser.app", category: "AIDisclaimerConsent")
 
 enum AIDisclaimer {
-    static let version = "atticus-disclaimer-v3.0-2026-10-27"
+    static let version = "atticus-disclaimer-v3.1-2026-10-28"
 
     static let title = "Before You Use Atticus"
 
@@ -16,7 +16,8 @@ enum AIDisclaimer {
         "Using Atticus does not create an attorney-client relationship. Your questions are not confidential or privileged.",
         "AI answers can be wrong, incomplete, or out of date, and laws vary by state. Verify anything important with an attorney licensed in your state.",
         "Do not rely on Atticus for emergencies or court deadlines.",
-        "To explain a case and answer your questions, the case details you open and the questions you ask are sent to Meta's Muse AI through CASER's server. Do not enter confidential, privileged, or sensitive personal information."
+        "To explain a case and answer your questions, the case details you open and the questions you ask are sent to Meta's Muse AI through CASER's server. Public court records may be used by Meta to improve its models; your typed questions are not. Do not enter confidential, privileged, or sensitive personal information.",
+        "If Muse can't be reached, Atticus answers with Apple Intelligence on your iPhone or Apple Private Cloud Compute, or shows a summary taken from the docket."
     ]
 
     static let privacyPolicyURL = "https://www.caserlegal.com/privacy"

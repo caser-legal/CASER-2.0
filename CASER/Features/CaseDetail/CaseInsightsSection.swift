@@ -66,6 +66,9 @@ struct CaseFollowUpSection: View {
                             .foregroundStyle(Color.caserAccent)
                         MuseMarkdownText(markdown: followUp.answer.text)
                         CitationList(citations: followUp.answer.citations)
+                        if let note = followUp.answer.source.note {
+                            FallbackNote(note: note)
+                        }
                     }
                     .atticusCard()
                 }
@@ -157,6 +160,10 @@ private struct InsightsCard: View {
                         }
                     }
                 }
+
+                if let note = model.insightsSource.note {
+                    FallbackNote(note: note) { await model.retryInsights() }
+                }
             }
         }
         .atticusCard()
@@ -205,22 +212,26 @@ private struct ResearchCard: View {
                 ThinkingArtifact(thinking: research.thinking)
                 SourceCards(citations: research.citations)
 
-                HStack(spacing: 6) {
-                    if let updatedAt = model.researchUpdatedAt {
-                        Text("Updated \(updatedAt.formatted(.relative(presentation: .named)))")
+                if let note = model.researchSource.note {
+                    FallbackNote(note: note) { await model.retryResearch() }
+                } else {
+                    HStack(spacing: 6) {
+                        if let updatedAt = model.researchUpdatedAt {
+                            Text("Updated \(updatedAt.formatted(.relative(presentation: .named)))")
+                        }
+                        Spacer()
+                        Button {
+                            Task { await model.retryResearch() }
+                        } label: {
+                            Label("Refresh", systemImage: "arrow.clockwise")
+                        }
+                        .foregroundStyle(Color.caserAccent)
+                        .frame(minHeight: 44)
+                        .accessibilityHint("Searches again for the latest news about this case")
                     }
-                    Spacer()
-                    Button {
-                        Task { await model.retryResearch() }
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                    }
-                    .foregroundStyle(Color.caserAccent)
-                    .frame(minHeight: 44)
-                    .accessibilityHint("Searches again for the latest news about this case")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.55))
                 }
-                .font(.caption)
-                .foregroundStyle(.white.opacity(0.55))
             }
         }
         .atticusCard()
@@ -234,6 +245,31 @@ private struct AtticusFooter: View {
             .font(.caption2)
             .foregroundStyle(.white.opacity(0.5))
             .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+private struct FallbackNote: View {
+    let note: String
+    var retry: (@MainActor () async -> Void)?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label(note, systemImage: "info.circle")
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.6))
+                .fixedSize(horizontal: false, vertical: true)
+            if let retry {
+                Button {
+                    Task { await retry() }
+                } label: {
+                    Label("Try Meta Muse Again", systemImage: "arrow.clockwise")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.caserAccent)
+                }
+                .frame(minHeight: 44)
+                .accessibilityHint("Asks Meta Muse for a fuller answer")
+            }
+        }
     }
 }
 
