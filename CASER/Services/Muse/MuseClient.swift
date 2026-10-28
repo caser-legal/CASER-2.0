@@ -208,19 +208,22 @@ struct CaseAnswer: Codable, Equatable, Sendable {
     let citations: [MuseCitation]
     var thinking: String
     var toolUsed: String
+    var source: AtticusSource
 
     enum CodingKeys: String, CodingKey {
         case text
         case citations
         case thinking
         case toolUsed
+        case source
     }
 
-    init(text: String, citations: [MuseCitation], thinking: String = "", toolUsed: String = "") {
+    init(text: String, citations: [MuseCitation], thinking: String = "", toolUsed: String = "", source: AtticusSource = .muse) {
         self.text = text
         self.citations = citations
         self.thinking = thinking
         self.toolUsed = toolUsed
+        self.source = source
     }
 
     init(from decoder: Decoder) throws {
@@ -229,6 +232,7 @@ struct CaseAnswer: Codable, Equatable, Sendable {
         citations = try container.decodeIfPresent([MuseCitation].self, forKey: .citations) ?? []
         thinking = try container.decodeIfPresent(String.self, forKey: .thinking) ?? ""
         toolUsed = try container.decodeIfPresent(String.self, forKey: .toolUsed) ?? ""
+        source = (try? container.decodeIfPresent(AtticusSource.self, forKey: .source)) ?? .muse
     }
 }
 
