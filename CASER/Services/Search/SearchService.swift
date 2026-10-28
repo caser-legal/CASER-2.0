@@ -320,7 +320,7 @@ final class SearchService {
                 publish(SearchProgress(
                     scannedCourts: scanned, totalCourts: total, foundEntries: filings,
                     matchingEntries: results.count, failedCourts: failed,
-                    statusText: "Searched \(scanned) of \(total) courts",
+                    statusText: "Searched \(scanned) courts",
                     progress: Double(scanned) / Double(total), isComplete: false, error: nil
                 ), onProgress: onProgress)
             }
