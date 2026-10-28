@@ -11,7 +11,7 @@
 [![Next.js](https://img.shields.io/badge/Backend-Next.js-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org)
 [![Hackathon](https://img.shields.io/badge/Meta_Global_AI_Developer_Hackathon-2026-FFD24D?style=for-the-badge)](https://dev.meta.ai/events/global-hackathon)
 
-[Live product](https://www.caserlegal.com) · [Backend repository](https://github.com/caser-legal/www-caserlegal-com) · [Built during the hackathon](#-built-during-the-hackathon)
+**[Try it on iPhone with TestFlight](https://testflight.apple.com/join/BhnF2kbQ)** · [Live product](https://www.caserlegal.com) · [Backend repository](https://github.com/caser-legal/www-caserlegal-com) · [Built during the hackathon](#-built-during-the-hackathon)
 
 </div>
 
