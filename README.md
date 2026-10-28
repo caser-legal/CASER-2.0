@@ -71,7 +71,7 @@ The research for a case is done once and shared: the next person who opens it ge
 
 ## 🏆 Built during the hackathon
 
-**Event:** Meta Global AI Developer Hackathon (Cerebral Valley), Oct 26 – Nov 4, 2026 · **Track:** Startups (CASER, LLC) · **Theme:** Build for Your World · **Team:** Adam Doherty (solo).
+**Event:** Meta Global AI Developer Hackathon (Cerebral Valley), Oct 26 – Nov 4, 2026 · **Track:** Startups (CASER) · **Theme:** Build for Your World · **Team:** Adam Doherty (solo).
 
 CASER is an existing product, and the rules let startups build on an existing codebase as long as the new work is clearly identified. Here is exactly what is **new in this submission**. Everything else (court search, alerts, saved cases, the shipping app shell) predates the event and is not claimed as hackathon work.
 
@@ -198,7 +198,7 @@ npm test                      # 129 tests, node:test
 
 ## Creator
 
-**Adam Doherty**: founder of CASER, LLC and creator of CASER (Case Alerts & Search of Electronic Records). CASER is a live product on the App Store; this hackathon entry rebuilds its heart around Meta Muse.
+**Adam Doherty**: founder and creator of CASER (Case Alerts & Search of Electronic Records). CASER is a live product on the App Store; this hackathon entry rebuilds its heart around Meta Muse.
 
 <div align="center">
 
