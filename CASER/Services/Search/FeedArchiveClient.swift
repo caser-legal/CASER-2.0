@@ -52,7 +52,7 @@ actor FeedArchiveClient {
         self.session = URLSession(configuration: configuration)
     }
 
-    static var endpoint: URL? {
+    static var baseURL: URL? {
         guard let raw = (Bundle.main.object(forInfoDictionaryKey: "MuseBackendURL") as? String)?
             .trimmingCharacters(in: .whitespacesAndNewlines),
               !raw.isEmpty,
@@ -61,11 +61,16 @@ actor FeedArchiveClient {
               url.scheme?.lowercased() == "https" else {
             return nil
         }
-        return url.appending(path: "v1/docket-archive")
+        return url
+    }
+
+    static var endpoint: URL? {
+        baseURL?.appending(path: "v1/docket-archive")
     }
 
     func search(query: String, days: Int = 30) async -> [CaseEntry] {
-        guard let endpoint = Self.endpoint,
+        guard let baseURL = Self.baseURL,
+              let endpoint = Self.endpoint,
               var components = URLComponents(url: endpoint, resolvingAgainstBaseURL: false) else {
             return []
         }
@@ -78,7 +83,17 @@ actor FeedArchiveClient {
         do {
             var request = URLRequest(url: url)
             request.setValue("application/json", forHTTPHeaderField: "Accept")
-            let (data, response) = try await session.data(for: request)
+            var data = Data()
+            var response: URLResponse?
+            for attempt in 0..<2 {
+                request.setValue(try await MuseClient.deviceToken(baseURL: baseURL), forHTTPHeaderField: DeviceAttestor.header)
+                (data, response) = try await session.data(for: request)
+                if (response as? HTTPURLResponse)?.statusCode == 401, attempt == 0 {
+                    await DeviceAttestor.shared.reset()
+                    continue
+                }
+                break
+            }
             guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
                 archiveLogger.debug("Archive search returned a non-200 status")
                 return []
