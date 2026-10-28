@@ -139,7 +139,8 @@ struct OnboardingView: View {
                 Text("PACER charges 1,109× more than cloud storage costs for the same data.")
                     .font(.system(.caption, design: .serif).italic())
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .padding(.horizontal, 24)
                     .padding(.bottom, 8)
             }
@@ -179,8 +180,7 @@ struct OnboardingView: View {
                 .padding(20)
                 .glassSurface(style: .thin)
                 .padding(.horizontal, 24)
-
-                Spacer()
+                .padding(.bottom, 28)
 
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 32) {
@@ -196,7 +196,8 @@ struct OnboardingView: View {
                     }
                 }
                 .padding(.horizontal, 24)
-                .padding(.bottom, 8)
+
+                Spacer()
             }
         }
     }
@@ -226,11 +227,11 @@ struct OnboardingView: View {
                     .padding(.bottom, 28)
 
                 VStack(alignment: .leading, spacing: 14) {
-                    atticusRow(icon: "book.fill", text: "Research legal concepts, statutes & precedent")
+                    atticusRow(icon: "book.fill", text: "Research law, statutes & precedent")
                     atticusRow(icon: "text.magnifyingglass", text: "Define terms and explain legal structures")
                     atticusRow(icon: "arrow.triangle.branch", text: "Connect principles across areas of law")
                     atticusRow(icon: "doc.plaintext.fill", text: "Summarize complex legal texts")
-                    atticusRow(icon: "scale.3d", text: "Neutral information — never legal advice")
+                    atticusRow(icon: "bolt.fill", text: "Always on with Meta Muse Spark")
                 }
                 .padding(20)
                 .glassSurface(style: .thin)
@@ -265,21 +266,14 @@ struct OnboardingView: View {
                     .tracking(0.5)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 8)
-
-                Text(AppBranding.fullName)
-                    .font(.system(.caption, design: .serif).weight(.medium))
-                    .foregroundStyle(Color.caserAccent)
-                    .tracking(0.5)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 28)
+                    .padding(.bottom, 20)
 
                 VStack(spacing: 12) {
                     featureRow(icon: "magnifyingglass", title: "Search", desc: "Federal court records across all jurisdictions")
                     featureRow(icon: "bell.badge.fill", title: "Monitor", desc: "Notifications on new filings that match your keywords")
                     featureRow(icon: "brain.head.profile.fill", title: "Atticus AI", desc: "Intelligent legal research assistant")
                     featureRow(icon: "dollarsign.circle.fill", title: "Save", desc: "Track PACER fees you've avoided")
+                    featureRow(icon: "bolt.fill", title: "Always On", desc: "Powered by Meta Muse Spark")
                 }
                 .padding(20)
                 .glassSurface(style: .thin)
@@ -352,8 +346,9 @@ struct OnboardingView: View {
             Text(text)
                 .font(.system(.subheadline, design: .serif))
                 .foregroundStyle(.primary.opacity(0.85))
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer()
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
     }

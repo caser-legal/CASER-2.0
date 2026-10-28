@@ -1031,6 +1031,32 @@ private struct SearchIdleView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
+            NavigationLink(destination: SavedCasesView()) {
+                HStack(spacing: 12) {
+                    Image(systemName: "heart.fill")
+                        .foregroundStyle(Color.caserAccent)
+                        .frame(width: 24)
+                        .accessibilityHidden(true)
+                    Text("Saved Cases")
+                        .font(.body)
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Text(savedCount.formatted())
+                        .font(.body.monospacedDigit())
+                        .foregroundStyle(.white.opacity(0.5))
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.35))
+                        .accessibilityHidden(true)
+                }
+                .padding(.horizontal, 16)
+                .frame(minHeight: 48)
+                .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Saved Cases, \(savedCount)")
+
             if recentSearches.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "doc.text.magnifyingglass")
@@ -1047,7 +1073,7 @@ private struct SearchIdleView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 32)
-                .padding(.top, 32)
+                .padding(.top, 16)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Recent")
@@ -1083,31 +1109,6 @@ private struct SearchIdleView: View {
                 }
             }
 
-            NavigationLink(destination: SavedCasesView()) {
-                HStack(spacing: 12) {
-                    Image(systemName: "heart.fill")
-                        .foregroundStyle(Color.caserAccent)
-                        .frame(width: 24)
-                        .accessibilityHidden(true)
-                    Text("Saved Cases")
-                        .font(.body)
-                        .foregroundStyle(.white)
-                    Spacer()
-                    Text(savedCount.formatted())
-                        .font(.body.monospacedDigit())
-                        .foregroundStyle(.white.opacity(0.5))
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.35))
-                        .accessibilityHidden(true)
-                }
-                .padding(.horizontal, 16)
-                .frame(minHeight: 48)
-                .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Saved Cases, \(savedCount)")
         }
         .padding(.horizontal, 20)
     }
