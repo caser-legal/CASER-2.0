@@ -146,7 +146,7 @@ struct AlertDetailView: View {
             if let activeSearch, activeSearch.courtsTotal > 0 {
                 ProgressView(value: activeSearch.fractionComplete)
                     .tint(Color.caserAccent)
-                Text("\(activeSearch.courtsSearched) of \(activeSearch.courtsTotal) courts · \(activeSearch.filingsSearched.formatted()) filings read")
+                Text("Searched \(activeSearch.courtsSearched) courts · \(activeSearch.filingsSearched.formatted()) filings read")
                     .font(.caption)
                     .monospacedDigit()
                     .foregroundStyle(.white.opacity(0.65))

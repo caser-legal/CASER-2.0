@@ -652,7 +652,7 @@ private struct AlertRow: View {
 
     private var searchingText: String {
         guard let activeSearch, activeSearch.courtsTotal > 0 else { return "Searching…" }
-        return "Searching \(activeSearch.courtsSearched) of \(activeSearch.courtsTotal) courts"
+        return "Searched \(activeSearch.courtsSearched) courts"
     }
 
     private var summaryText: String {
