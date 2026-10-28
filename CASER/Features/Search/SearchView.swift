@@ -86,11 +86,12 @@ struct SearchView: View {
                                 Image(systemName: isSearching ? "stop.circle.fill" : "xmark.circle.fill")
                                     .font(.title3)
                                     .foregroundStyle(.white.opacity(0.65))
-                                    .frame(minWidth: 44, minHeight: 44)
+                                    .frame(minWidth: 36, minHeight: 44, alignment: .trailing)
                                     .contentShape(Rectangle())
                             }
                             .accessibilityLabel(isSearching ? "Cancel search" : "Clear search")
                             .accessibilityHint(isSearching ? "Stops the active search and clears the query" : "")
+                            .padding(.trailing, -8)
                         }
 
                         Button {
