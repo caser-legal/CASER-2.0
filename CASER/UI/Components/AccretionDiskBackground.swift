@@ -272,7 +272,7 @@ struct BrandAccretionHero: View {
             .scaleEffect(logoScale)
             .opacity(logoOpacity)
         }
-        .frame(width: diskSize, height: diskSize)
+        .frame(minWidth: diskSize, maxWidth: .infinity, minHeight: diskSize, maxHeight: diskSize)
         .task(id: playLaunchAnimation) {
             guard playLaunchAnimation else { return }
             await runLaunchEntrance()
@@ -304,8 +304,8 @@ struct BrandTagline: View {
             .foregroundStyle(.white.opacity(0.7))
             .tracking(0.3)
             .multilineTextAlignment(.center)
-            .lineLimit(2)
-            .minimumScaleFactor(0.8)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .padding(.horizontal, 24)
     }
 }
