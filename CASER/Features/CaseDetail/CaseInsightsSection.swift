@@ -114,8 +114,10 @@ private struct InsightsCard: View {
         VStack(alignment: .leading, spacing: 14) {
             switch model.insights {
             case .idle, .loading:
+                ArtifactSectionTitle(title: "What This Filing Is", icon: "doc.text.magnifyingglass")
                 MuseSkeleton(label: "Atticus is reading this filing")
             case .failed(let message):
+                ArtifactSectionTitle(title: "What This Filing Is", icon: "doc.text.magnifyingglass")
                 RetryMessage(message: message) { await model.retryInsights() }
             case .loaded(let insights):
                 ArtifactSectionTitle(title: "What This Filing Is", icon: "doc.text.magnifyingglass")
