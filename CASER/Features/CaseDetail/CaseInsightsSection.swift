@@ -8,8 +8,8 @@ struct CaseInsightsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if model.hasConsent {
-                InsightsCard(model: model)
                 ResearchCard(model: model)
+                InsightsCard(model: model)
                 AtticusFooter()
             } else {
                 consentCard
