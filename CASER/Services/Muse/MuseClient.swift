@@ -298,6 +298,7 @@ enum MuseError: LocalizedError, Equatable {
     case timedOut
     case rejected
     case unavailable
+    case deviceUnsupported
 
     var errorDescription: String? {
         switch self {
@@ -313,6 +314,8 @@ enum MuseError: LocalizedError, Equatable {
             return "Atticus couldn't read this case. Please try again."
         case .unavailable:
             return "Atticus is unavailable right now. Please try again."
+        case .deviceUnsupported:
+            return "Atticus needs an iPhone that supports Apple App Attest."
         }
     }
 
@@ -433,8 +436,20 @@ actor MuseClient {
                     request.httpBody = try JSONEncoder().encode(
                         QuestionRequest(entry: context, notes: notes, history: Array(history.suffix(6)), question: question)
                     )
-                    let (bytes, response) = try await session.bytes(for: request)
-                    guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                    var streamed: (URLSession.AsyncBytes, URLResponse)?
+                    for attempt in 0..<2 {
+                        request.setValue(try await Self.deviceToken(baseURL: baseURL), forHTTPHeaderField: DeviceAttestor.header)
+                        let result = try await session.bytes(for: request)
+                        if (result.1 as? HTTPURLResponse)?.statusCode == 401, attempt == 0 {
+                            await DeviceAttestor.shared.reset()
+                            continue
+                        }
+                        streamed = result
+                        break
+                    }
+                    guard let (bytes, response) = streamed,
+                          let http = response as? HTTPURLResponse,
+                          (200..<300).contains(http.statusCode) else {
                         throw MuseError.unavailable
                     }
                     var sawText = false
@@ -482,12 +497,26 @@ actor MuseClient {
         }
     }
 
-    private func post<Response: Decodable>(_ path: String, body: some Encodable) async throws -> Response {
+    static func deviceToken(baseURL: URL) async throws -> String {
+        do {
+            return try await DeviceAttestor.shared.token(baseURL: baseURL)
+        } catch DeviceAttestor.AttestorError.unsupported {
+            throw MuseError.deviceUnsupported
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            museLogger.error("Device attestation failed")
+            throw MuseError.unavailable
+        }
+    }
+
+    private func post<Response: Decodable>(_ path: String, body: some Encodable, retried: Bool = false) async throws -> Response {
         guard let baseURL else { throw MuseError.notConfigured }
         var request = URLRequest(url: baseURL.appending(path: path))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(try await Self.deviceToken(baseURL: baseURL), forHTTPHeaderField: DeviceAttestor.header)
         request.httpBody = try JSONEncoder().encode(body)
 
         let data: Data
@@ -510,6 +539,11 @@ actor MuseClient {
 
         guard let http = response as? HTTPURLResponse else { throw MuseError.unavailable }
         guard data.count <= Self.maximumResponseBytes else { throw MuseError.unavailable }
+
+        if http.statusCode == 401, !retried {
+            await DeviceAttestor.shared.reset()
+            return try await post(path, body: body, retried: true)
+        }
 
         guard (200..<300).contains(http.statusCode) else {
             let code = (try? decoder.decode(ErrorEnvelope.self, from: data))?.error ?? ""
