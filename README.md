@@ -13,7 +13,8 @@
 
 [![Watch the demo](https://img.shields.io/badge/Watch_the_demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/dX9PhslaSR0)
 [![Try it on TestFlight](https://img.shields.io/badge/Try_it_on_iPhone-TestFlight-0D96F6?style=for-the-badge&logo=apple&logoColor=white)](https://testflight.apple.com/join/BhnF2kbQ)
-[![Live product](https://img.shields.io/badge/Live_product-caserlegal.com-111111?style=for-the-badge)](https://www.caserlegal.com)
+[![Website](https://img.shields.io/badge/Website-caserlegal.com%2Fmuse-111111?style=for-the-badge)](https://www.caserlegal.com/muse)
+[![Portfolio](https://img.shields.io/badge/Portfolio-apple.caserlegal.com-FFD24D?style=for-the-badge)](https://apple.caserlegal.com)
 [![Backend](https://img.shields.io/badge/Backend-www--caserlegal--com-24292F?style=for-the-badge&logo=github)](https://github.com/caser-legal/www-caserlegal-com)
 
 <a href="https://youtu.be/dX9PhslaSR0"><img src="https://img.youtube.com/vi/dX9PhslaSR0/maxresdefault.jpg" width="720" alt="Watch the CASER demo video on YouTube"></a>
@@ -230,7 +231,7 @@ npm test                      # 129 tests, node:test
 
 ## Creator
 
-**Adam Doherty** is the founder and creator of CASER (Case Alerts & Search of Electronic Records). CASER wasn't built to be a business. It started last year as an Automator workflow Adam made to follow his own federal case, grew into a live App Store product, and this hackathon entry, his first, rebuilds its heart around Meta Muse.
+**[Adam Doherty](https://apple.caserlegal.com)** is the founder and creator of CASER (Case Alerts & Search of Electronic Records). CASER wasn't built to be a business. It started last year as an Automator workflow Adam made to follow his own federal case, grew into a live App Store product, and this hackathon entry, his first, rebuilds its heart around Meta Muse.
 
 Thank you to Meta, Muse (the one with fur, and the model) and Cerebral Valley. Court records have always been public. Let's keep it that way.
 
