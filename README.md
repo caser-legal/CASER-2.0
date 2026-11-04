@@ -11,6 +11,7 @@
 [![Next.js](https://img.shields.io/badge/Backend-Next.js-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org)
 [![Hackathon](https://img.shields.io/badge/Meta_Global_AI_Developer_Hackathon-2026-FFD24D?style=for-the-badge)](https://dev.meta.ai/events/global-hackathon)
 
+[![Watch the demo](https://img.shields.io/badge/Watch_the_demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/dX9PhslaSR0)
 [![Try it on TestFlight](https://img.shields.io/badge/Try_it_on_iPhone-TestFlight-0D96F6?style=for-the-badge&logo=apple&logoColor=white)](https://testflight.apple.com/join/BhnF2kbQ)
 [![Live product](https://img.shields.io/badge/Live_product-caserlegal.com-111111?style=for-the-badge)](https://www.caserlegal.com)
 [![Backend](https://img.shields.io/badge/Backend-www--caserlegal--com-24292F?style=for-the-badge&logo=github)](https://github.com/caser-legal/www-caserlegal-com)
@@ -30,6 +31,14 @@
 > [!TIP]
 > **Judges:** install the [TestFlight build](https://testflight.apple.com/join/BhnF2kbQ) (everything is unlocked), search for **Apple**, tap **Details** on any case and turn on Atticus. A new case takes up to a minute while Atticus researches it; any case someone has already opened appears instantly.
 
+<div align="center">
+
+<a href="https://youtu.be/dX9PhslaSR0"><img src="https://img.youtube.com/vi/dX9PhslaSR0/maxresdefault.jpg" width="720" alt="Watch the CASER demo video on YouTube"></a>
+
+<sub><b>▶ <a href="https://youtu.be/dX9PhslaSR0">Watch the demo on YouTube</a></b></sub>
+
+</div>
+
 ---
 
 ## Contents
@@ -43,7 +52,7 @@
 
 ## The problem
 
-Every day, U.S. federal courts publish thousands of docket entries. They are public, free and almost unreadable: terse clerk shorthand (`[Dismiss] (14)`), unexplained procedure, no story and no context. People learn that their own case moved (a dismissal, a deadline, a ruling) from a single line of jargon, or they pay PACER $0.10 a page and still get no explanation. And because court feeds show only a short window, a filing someone *knows* happened last week has often already scrolled out of reach.
+Every day, U.S. federal courts publish thousands of docket entries. They are public, free and almost unreadable: terse clerk shorthand (`[Dismiss] (14)`), unexplained procedure, no story and no context. People learn that their own case moved (a dismissal, a deadline, a ruling) from a single line of jargon, or they pay PACER $0.10 a page and still get no explanation. And because a court's RSS feed shows only about the last 24 hours, a filing someone *knows* happened last week has already scrolled out of reach. Unless you refresh every court's feed every day, sometimes for months between filings, you miss what just happened.
 
 > [!IMPORTANT]
 > CASER closes that gap: it finds the filing, explains it in plain English, shows the story behind it, cites every source and keeps watching the case for you.
@@ -165,7 +174,7 @@ flowchart LR
         Attest["App Attest"]
         AppleAI["Apple Intelligence (fallback)"]
     end
-    Feeds["330+ federal court RSS feeds"] --> Cron
+    Feeds["400+ federal court RSS feeds"] --> Cron
     Feeds --> Alerts
     Cron --> Blob[("Vercel Blob: 30-day archive + shared research cache")]
     Blob --> ArchiveAPI
@@ -225,7 +234,9 @@ npm test                      # 129 tests, node:test
 
 ## Creator
 
-**Adam Doherty** is the founder and creator of CASER (Case Alerts & Search of Electronic Records). CASER is a live product on the App Store, and this hackathon entry rebuilds its heart around Meta Muse.
+**Adam Doherty** is the founder and creator of CASER (Case Alerts & Search of Electronic Records). CASER wasn't built to be a business. It started last year as an Automator workflow Adam made to follow his own federal case, grew into a live App Store product, and this hackathon entry, his first, rebuilds its heart around Meta Muse.
+
+Thank you to Meta, Muse (the one with fur, and the model) and Cerebral Valley. Court records have always been public. Let's keep it that way.
 
 <div align="center">
 
