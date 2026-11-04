@@ -3,10 +3,6 @@ import os.log
 
 private let archiveLogger = Logger(subsystem: "com.caser.app", category: "FeedArchive")
 
-/// Searches the caserlegal.com 30-day court-feed archive, which the server
-/// refreshes from every court RSS feed every 12 hours. Live feeds only carry
-/// recent filings, so the archive is what lets a keyword search find filings
-/// from the past 30 days.
 actor FeedArchiveClient {
     static let shared = FeedArchiveClient()
 

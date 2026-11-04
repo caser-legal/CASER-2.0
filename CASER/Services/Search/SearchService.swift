@@ -248,8 +248,6 @@ final class SearchService {
         courtTypes: Set<String> = [],
         onProgress: @escaping @MainActor @Sendable (SearchProgress) -> Void
     ) async {
-        // Past filings: the server archive holds 30 days of every court feed and
-        // refreshes every 12 hours, while live feeds only carry recent entries.
         let archiveTask = Task { () -> [CaseEntry] in
             guard let archiveDays, !archiveQuery.isEmpty else { return [] }
             let entries = await FeedArchiveClient.shared.search(query: archiveQuery, days: archiveDays)
