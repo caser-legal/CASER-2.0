@@ -92,7 +92,7 @@ CASER is an existing product, and the rules let startups build on an existing co
 <details>
 <summary><b>How to check it in git</b></summary>
 
-- **Backend** ([www-caserlegal-com](https://github.com/caser-legal/www-caserlegal-com)): every commit from `c32fa20` (Oct 27, 2026) onward is hackathon work. The commit before it, `e018b59`, is dated Oct 24, before the event started. Run `git log c32fa20~1..main`.
+- **Backend** ([www-caserlegal-com](https://github.com/caser-legal/www-caserlegal-com)): hackathon work starts at `c32fa20` (Oct 27, 2026). The commit before it, `e018b59`, is dated Oct 24, before the event started. A few later commits are routine site updates (footer, styling, pricing copy). Run `git log c32fa20~1..main`.
 - **iOS** (this repository): created during the event. Its first commit, `78e7f9d`, imports the existing CASER app together with the first hackathon changes; use the table below to tell the two apart.
 
 </details>
@@ -109,7 +109,7 @@ CASER is an existing product, and the rules let startups build on an existing co
 | Apple App Attest with a signed assertion on every Atticus request, so a copied token can't be replayed | iOS `DeviceAttestor` + backend `device-attest.ts` |
 | Measured cost: every Muse call's real cost recorded in a ledger, plus a monthly budget cap and per-device abuse limits | Backend `metering.ts`, `meter-store.ts` |
 | Reliability: research answers that Muse cut off (`status: incomplete`) or that aren't valid JSON are rejected, never shown as raw JSON | Backend `caseResearch` + iOS `CaseInsightsModel` |
-| A 30-day court-feed archive (12-hour ingest, Blob storage, archive search API and app integration) | Backend `feed-archive.ts` + iOS `FeedArchiveClient` |
+| A 30-day court-feed archive (daily ingest, Blob storage, archive search API and app integration) | Backend `feed-archive.ts` + iOS `FeedArchiveClient` |
 | A PDF export redesign: CASER logo, black and gold palette, one-line result rows with readable court abbreviations | `CASER/Services/PDF/` |
 | A Case Details layout rebuild (About first, Ask at the top, actions at the bottom, collapsed sources) | `CaseDetailView.swift` |
 
@@ -156,7 +156,7 @@ flowchart LR
     subgraph Web["caserlegal.com (Next.js on Vercel)"]
         API["/v1/case-insights · case-research · case-question(-stream)"]
         ArchiveAPI["/v1/docket-archive"]
-        Cron["Cron ingest (12h)"]
+        Cron["Cron ingest (daily)"]
     end
     subgraph Meta["Meta Model API"]
         Spark["Muse Spark 1.3"]
@@ -182,7 +182,7 @@ flowchart LR
 <details>
 <summary><b>The 30-day feed archive</b></summary>
 
-Court RSS feeds are a sliding window: miss a week and the filing is gone from the feed. The server keeps the window instead. Every court feed is fetched every 12 hours, deduplicated by court and entry, and stored by day; the first production ingest held **56,049 filings from 333 courts**. Anything older than 30 days is pruned on every run, and the app merges archive results into every search.
+Court RSS feeds are a sliding window: miss a week and the filing is gone from the feed. The server keeps the window instead. Every court feed is fetched daily, deduplicated by court and entry, and stored by day; the first production ingest held **56,049 filings from 333 court feeds**. Anything older than 30 days is pruned on every run, and the app merges archive results into every search.
 
 </details>
 
