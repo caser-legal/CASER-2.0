@@ -16,6 +16,10 @@
 [![Live product](https://img.shields.io/badge/Live_product-caserlegal.com-111111?style=for-the-badge)](https://www.caserlegal.com)
 [![Backend](https://img.shields.io/badge/Backend-www--caserlegal--com-24292F?style=for-the-badge&logo=github)](https://github.com/caser-legal/www-caserlegal-com)
 
+<a href="https://youtu.be/dX9PhslaSR0"><img src="https://img.youtube.com/vi/dX9PhslaSR0/maxresdefault.jpg" width="720" alt="Watch the CASER demo video on YouTube"></a>
+
+<sub><b>▶ <a href="https://youtu.be/dX9PhslaSR0">Watch the demo on YouTube</a></b></sub>
+
 <table>
   <tr>
     <td align="center"><img src="docs/images/dashboard.png" width="180" alt="CASER dashboard with saved cases, alerts and PACER savings"><br><sub><b>Case tracker</b></sub></td>
@@ -30,14 +34,6 @@
 
 > [!TIP]
 > **Judges:** install the [TestFlight build](https://testflight.apple.com/join/BhnF2kbQ) (everything is unlocked), search for **Apple**, tap **Details** on any case and turn on Atticus. A new case takes up to a minute while Atticus researches it; any case someone has already opened appears instantly.
-
-<div align="center">
-
-<a href="https://youtu.be/dX9PhslaSR0"><img src="https://img.youtube.com/vi/dX9PhslaSR0/maxresdefault.jpg" width="720" alt="Watch the CASER demo video on YouTube"></a>
-
-<sub><b>▶ <a href="https://youtu.be/dX9PhslaSR0">Watch the demo on YouTube</a></b></sub>
-
-</div>
 
 ---
 
