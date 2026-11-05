@@ -11,15 +11,15 @@
 [![Next.js](https://img.shields.io/badge/Backend-Next.js-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org)
 [![Hackathon](https://img.shields.io/badge/Meta_Global_AI_Developer_Hackathon-2026-FFD24D?style=for-the-badge)](https://dev.meta.ai/events/global-hackathon)
 
-[![Watch the demo](https://img.shields.io/badge/Watch_the_demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/dX9PhslaSR0)
+[![Watch the demo](https://img.shields.io/badge/Watch_the_demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/IkZkKwwFOEo)
 [![Try it on TestFlight](https://img.shields.io/badge/Try_it_on_iPhone-TestFlight-0D96F6?style=for-the-badge&logo=apple&logoColor=white)](https://testflight.apple.com/join/BhnF2kbQ)
 [![Website](https://img.shields.io/badge/Website-caserlegal.com%2Fmuse-111111?style=for-the-badge)](https://www.caserlegal.com/muse)
 [![Portfolio](https://img.shields.io/badge/Portfolio-apple.caserlegal.com-FFD24D?style=for-the-badge)](https://apple.caserlegal.com)
 [![Backend](https://img.shields.io/badge/Backend-www--caserlegal--com-24292F?style=for-the-badge&logo=github)](https://github.com/caser-legal/www-caserlegal-com)
 
-<a href="https://youtu.be/dX9PhslaSR0"><img src="https://img.youtube.com/vi/dX9PhslaSR0/maxresdefault.jpg" width="720" alt="Watch the CASER demo video on YouTube"></a>
+<a href="https://youtu.be/IkZkKwwFOEo"><img src="https://img.youtube.com/vi/IkZkKwwFOEo/maxresdefault.jpg" width="720" alt="Watch the CASER demo video on YouTube"></a>
 
-<sub><b>▶ <a href="https://youtu.be/dX9PhslaSR0">Watch the demo on YouTube</a></b></sub>
+<sub><b>▶ <a href="https://youtu.be/IkZkKwwFOEo">Watch the demo on YouTube</a></b></sub>
 
 <table>
   <tr>
